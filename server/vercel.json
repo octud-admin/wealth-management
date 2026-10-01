@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/", "destination": "/api/page" }
+  ],
   "crons": [
     { "path": "/api/snapshot", "schedule": "30 7 * * *" }
   ]

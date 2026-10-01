@@ -26,6 +26,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:.4}
 tbody tr:nth-child(even) td{background:var(--schemes-surface-container-low)}
 </style>
 </helmet>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="18" fill="#485e92"/><path d="M26 66 L40 50 L52 58 L74 34" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></template>
 
 <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--schemes-primary);padding:24px">
@@ -55,6 +56,7 @@ tbody tr:nth-child(even) td{background:var(--schemes-surface-container-low)}
         <img src="assets/octud-symbol.svg" width="24" height="24" alt="">
         <div class="type-title-medium" style="flex:1">법인계좌 투자</div>
         <span class="type-label-medium" style="color:var(--text-muted);display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:{{ syncDot }}"></span>{{ syncLabel }}</span>
+        <span class="type-label-medium" style="color:var(--text-muted);white-space:nowrap">시세 {{ priceAsOf }} · {{ autoLabel }}</span>
         <x-import component-from-global-scope="OctudDesignSystem_46f0ba.IconButton" icon="Download" size="s" aria-label="백업 내려받기 (CSV)" on-click="{{ downloadBackup }}" hint-size="32px,32px"></x-import>
         <x-import component-from-global-scope="OctudDesignSystem_46f0ba.IconButton" icon="Redo" variant="tonal" size="s" aria-label="시세 갱신" on-click="{{ refreshPrices }}" hint-size="32px,32px"></x-import>
       </div>
@@ -182,7 +184,7 @@ tbody tr:nth-child(even) td{background:var(--schemes-surface-container-low)}
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
           <div>
             <div class="type-title-medium">보유 종목</div>
-            <div class="type-body-small" style="color:var(--text-muted);margin-top:2px">현재가·보유량은 셀을 눌러 수정. 변경은 이 기기에 저장됩니다.</div>
+            <div class="type-body-small" style="color:var(--text-muted);margin-top:2px">현재가 기준 {{ priceAsOf }} ({{ liveLabel }}) · {{ autoLabel }} · 보유량은 셀을 눌러 수정</div>
           </div>
           <label class="type-body-medium" style="display:flex;align-items:center;gap:8px">투자원금
             <input type="number" value="{{ investedStr }}" onChange="{{ setInvested }}" style="width:150px;height:40px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;font-variant-numeric:tabular-nums;background:var(--schemes-surface);color:var(--schemes-on-surface);font-size:15px">
@@ -592,7 +594,7 @@ tbody tr:nth-child(even) td{background:var(--schemes-surface-container-low)}
 </div>
 </sc-if>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;blue-lt&quot;,&quot;indigo-lt&quot;,&quot;teal-lt&quot;,&quot;green-lt&quot;,&quot;purple-lt&quot;,&quot;orange-lt&quot;,&quot;monochrome-lt&quot;,&quot;blue-dt&quot;,&quot;teal-dt&quot;],&quot;default&quot;:&quot;blue-lt&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;테마&quot;},&quot;accountName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Octud 법인 · 자산배분 성장형&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;계좌&quot;},&quot;accountType&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;과세계좌&quot;,&quot;절세계좌&quot;],&quot;default&quot;:&quot;과세계좌&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;relThreshold&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.25,&quot;min&quot;:0.05,&quot;max&quot;:0.5,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;absThreshold&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.05,&quot;min&quot;:0.01,&quot;max&quot;:0.2,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;password&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;octud&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;접근&quot;},&quot;priceEndpoint&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;시세 연동&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;blue-lt&quot;,&quot;indigo-lt&quot;,&quot;teal-lt&quot;,&quot;green-lt&quot;,&quot;purple-lt&quot;,&quot;orange-lt&quot;,&quot;monochrome-lt&quot;,&quot;blue-dt&quot;,&quot;teal-dt&quot;],&quot;default&quot;:&quot;blue-lt&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;테마&quot;},&quot;accountName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Octud 법인 · 자산배분 성장형&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;계좌&quot;},&quot;accountType&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;과세계좌&quot;,&quot;절세계좌&quot;],&quot;default&quot;:&quot;과세계좌&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;relThreshold&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.25,&quot;min&quot;:0.05,&quot;max&quot;:0.5,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;absThreshold&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.05,&quot;min&quot;:0.01,&quot;max&quot;:0.2,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;autoRefreshMin&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:0,&quot;max&quot;:60,&quot;unit&quot;:&quot;분&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;시세 (0 = 자동 갱신 끄기)&quot;},&quot;password&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;octud&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;접근 (서버 미연결 시에만 사용)&quot;},&quot;apiBase&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://wealth-pi-ebon.vercel.app/api&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;서버 연동 (Vercel 주소)&quot;}}">
 const KEY = 'octud-invest-v2';
 const DEFAULT_ASSETS = [
   { code:'379810', name:'KODEX 미국나스닥 100', cls:'미국', group:'주식', target:0.095, price:27525, held:1649 },
@@ -649,7 +651,20 @@ class Component extends DCLogic {
   }
   applyTheme(){ document.documentElement.setAttribute('data-mode', this.props.theme || 'blue-lt'); }
   get api(){ return (this.props.apiBase || '').trim().replace(/\/$/, ''); }
-  componentDidMount(){ this.applyTheme(); if (this.api && this.state.token && !this.state.locked) this.loadServer(); }
+  componentDidMount(){
+    this.applyTheme();
+    if (this.api && this.state.token && !this.state.locked) this.loadServer().then(() => this.refreshPrices(true));
+    this.tick = setInterval(() => this.autoRefresh(), 30000);
+  }
+  componentWillUnmount(){ clearInterval(this.tick); }
+  marketOpen(){ const k = new Date(Date.now() + 9*3600*1000); const d = k.getUTCDay(), m = k.getUTCHours()*60 + k.getUTCMinutes(); return d>=1 && d<=5 && m >= 9*60 && m <= 15*60+40; }
+  autoRefresh(){
+    const every = Number(this.props.autoRefreshMin ?? 5);
+    if (!every || !this.api || this.state.locked || this.state.refreshing) return;
+    if (!this.marketOpen()) return;
+    if (Date.now() - (this.lastRefresh || 0) < every*60000) return;
+    this.refreshPrices(true);
+  }
   componentDidUpdate(prev){ if (prev.theme !== this.props.theme) this.applyTheme(); if (prev.apiBase !== this.props.apiBase && this.api && this.state.token && !this.state.locked) this.loadServer(); }
   async call(path, opts={}){
     const res = await fetch(this.api + path, { ...opts, headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + this.state.token, ...(opts.headers||{}) } });
@@ -693,18 +708,23 @@ class Component extends DCLogic {
     });
   }
   toast(msg){ this.setState({ snack: msg }); clearTimeout(this.snackT); this.snackT = setTimeout(()=>this.setState({ snack:'' }), 4000); }
-  async refreshPrices(){
+  async refreshPrices(silent){
     if (!this.api) { this.setState({ tab:1 }); this.toast('서버 주소(apiBase)가 없습니다. 종목 탭에서 현재가를 직접 입력하세요.'); return; }
     this.setState({ refreshing:true });
     try {
       const codes = this.state.assets.map(a=>a.code).join(',');
       const res = await fetch(`${this.api}/prices?codes=${codes}`);
       const data = await res.json();
+      const changed = this.state.assets.some(a => data[a.code] && Number(data[a.code]) !== a.price);
       const assets = this.state.assets.map(a => data[a.code] ? { ...a, price: Number(data[a.code]) } : a);
       const t = new Date();
-      this.persist({ assets, live:true, priceAsOf: `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`, refreshing:false }, '시세 갱신');
-      this.toast('시세를 갱신했습니다.');
-    } catch(e){ this.setState({ refreshing:false }); this.toast('시세 조회 실패: ' + e.message); }
+      const priceAsOf = `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+      this.lastRefresh = Date.now();
+      // 가격이 바뀐 경우에만 서버에 저장 (이력 노이즈 방지); 자동 갱신은 이력에 남기지 않음
+      if (changed && !silent) this.persist({ assets, live:true, priceAsOf, refreshing:false }, '시세 갱신');
+      else this.setState({ assets, live:true, priceAsOf, refreshing:false }, () => { try { localStorage.setItem(KEY, JSON.stringify(this.localSnapshot())); } catch(e){} });
+      if (!silent) this.toast('시세를 갱신했습니다.');
+    } catch(e){ this.setState({ refreshing:false }); if (!silent) this.toast('시세 조회 실패: ' + e.message); }
   }
   async takeSnapshot(){
     if (!this.api) { this.toast('서버 연결 후 사용할 수 있습니다.'); return; }
@@ -899,6 +919,7 @@ class Component extends DCLogic {
       tryUnlock: e => { if (e && e.preventDefault) e.preventDefault(); const typed = (this.pwRef && this.pwRef.current ? this.pwRef.current.value : this.state.pw).trim(); this.unlock(typed, password); },
       serverMode: !!this.api, syncLabel: this.api ? (s.syncing ? '동기화 중…' : s.syncError ? '서버 오류' : '서버 연결됨') : '로컬 저장', syncDot: this.api ? (s.syncError ? 'var(--schemes-error)' : s.syncing ? 'oklch(0.85 0.17 95)' : 'oklch(0.72 0.17 150)') : 'var(--schemes-outline)',
       downloadBackup: () => this.downloadBackup(), takeSnapshot: () => this.takeSnapshot(),
+      autoLabel: !this.api ? '수동 입력' : !Number(this.props.autoRefreshMin ?? 5) ? '자동 갱신 꺼짐' : this.marketOpen() ? `장중 ${Number(this.props.autoRefreshMin ?? 5)}분마다 자동 갱신` : '장 마감 · 다음 개장 시 자동 갱신',
       history: s.history.map(hh => ({ date: hh.date, who: hh.who, note: hh.note })), hasHistory: s.history.length > 0,
       dailyCount: s.daily.length,
       tabItems: ['홈','종목','리밸런싱','수익률','로드맵'], tab: s.tab, setTab: v => this.setState({ tab: v }),

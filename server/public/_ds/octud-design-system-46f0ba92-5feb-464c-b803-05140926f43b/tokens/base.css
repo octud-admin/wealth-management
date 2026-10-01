@@ -1,0 +1,6 @@
+/* Octud Design System — Base reset & defaults */
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:var(--font-plain);color:var(--text-body);background:var(--surface);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:var(--schemes-primary);text-decoration:none}
+a:hover{text-decoration:underline}
+:where(button){font-family:inherit}
