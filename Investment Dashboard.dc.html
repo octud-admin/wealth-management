@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Octud 법인계좌 투자 대시보드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/tokens/fig-tokens.css">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/tokens/semantic.css">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/tokens/base.css">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/tokens/interactions.css">
+<link rel="stylesheet" href="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/styles.css">
+<script src="_ds/octud-design-system-46f0ba92-5feb-464c-b803-05140926f43b/_ds_bundle.js"></script>
+<script>document.documentElement.setAttribute("data-mode","blue-lt")</script>
+<style>
+html,body{margin:0;min-height:100%;background:var(--schemes-surface-container-low);color:var(--schemes-on-surface);font-family:'Roboto','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+a{color:var(--schemes-primary)}a:hover{color:var(--schemes-on-primary-container)}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+tbody tr:nth-child(even) td{background:var(--schemes-surface-container-low)}
+</style>
+</helmet>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--schemes-primary);padding:24px">
+  <div style="width:100%;max-width:400px;padding:32px;display:flex;flex-direction:column;gap:20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+    <img src="assets/octud-logo-horizontal.svg" height="30" alt="Octud" style="align-self:flex-start">
+    <div>
+      <div class="type-headline-small">법인계좌 투자 대시보드</div>
+      <div class="type-body-medium" style="color:var(--text-muted);margin-top:4px">팀 공유 비밀번호를 입력하세요.</div>
+    </div>
+    <form onSubmit="{{ tryUnlock }}" style="display:flex;flex-direction:column;gap:16px">
+      <input type="password" ref="{{ pwRef }}" onInput="{{ setPw }}" placeholder="비밀번호" autoFocus="{{ true }}" autoComplete="current-password" style="height:52px;padding:0 16px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);background:var(--schemes-surface);color:var(--schemes-on-surface);font-size:16px;outline:none">
+      <sc-if value="{{ pwError }}" hint-placeholder-val="{{ false }}">
+        <div class="type-body-small" style="color:var(--error);display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.Icon" name="Error" size="16" hint-size="16px,16px"></x-import>비밀번호가 올바르지 않습니다.</div>
+      </sc-if>
+      <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Button" variant="filled" size="m" on-click="{{ tryUnlock }}" hint-size="auto,40px">입장</x-import>
+    </form>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;display:flex;flex-direction:column">
+
+  <div style="background:var(--schemes-surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10">
+    <div style="max-width:1200px;margin:0 auto;padding:10px 16px 0;display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="assets/octud-symbol.svg" width="24" height="24" alt="">
+        <div class="type-title-medium" style="flex:1">법인계좌 투자</div>
+        <span class="type-label-medium" style="color:var(--text-muted);display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:{{ syncDot }}"></span>{{ syncLabel }}</span>
+        <x-import component-from-global-scope="OctudDesignSystem_46f0ba.IconButton" icon="Download" size="s" aria-label="백업 내려받기 (CSV)" on-click="{{ downloadBackup }}" hint-size="32px,32px"></x-import>
+        <x-import component-from-global-scope="OctudDesignSystem_46f0ba.IconButton" icon="Redo" variant="tonal" size="s" aria-label="시세 갱신" on-click="{{ refreshPrices }}" hint-size="32px,32px"></x-import>
+      </div>
+      <div style="overflow-x:auto;margin:0 -8px">
+        <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Tabs" tabs="{{ tabItems }}" value="{{ tab }}" on-change="{{ setTab }}" hint-size="100%,48px"></x-import>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 홈 ============ -->
+  <sc-if value="{{ show0 }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width:720px;width:100%;margin:0 auto;padding:12px 16px 40px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px">
+
+    <div style="padding:24px 22px;background:var(--schemes-surface);display:flex;flex-direction:column;gap:0;box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:10px" class="type-title-medium">
+        <span style="width:26px;height:26px;border-radius:50%;background:conic-gradient({{ donut }})"></span>
+        <span>{{ accountName }}</span>
+      </div>
+      <div style="font-size:clamp(34px,8vw,46px);font-weight:700;letter-spacing:-0.02em;line-height:1.15;margin-top:12px;font-variant-numeric:tabular-nums">{{ totalEvalFmt }}<span style="font-size:0.6em;font-weight:500">원</span></div>
+      <div class="type-body-medium" style="color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:6px">시세 {{ priceAsOf }} <span style="width:8px;height:8px;border-radius:50%;background:{{ liveDot }}"></span> {{ liveLabel }}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:28px" class="type-body-large">
+        <span style="color:var(--text-muted)">투자원금</span><span style="font-variant-numeric:tabular-nums;font-weight:500">{{ investedFmt }}원</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:14px" class="type-body-large">
+        <span style="color:var(--text-muted)">자산 변동 금액</span><span style="font-variant-numeric:tabular-nums;font-weight:700;color:{{ pnlColor }}">{{ pnlFmt }}원 ({{ pnlPctFmt }})</span>
+      </div>
+    </div>
+
+    <div style="padding:22px 22px 18px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div class="type-title-medium">누적 수익률</div>
+        <div class="type-label-medium" style="color:var(--text-muted)">시간가중 · 기준가 {{ navFmt }}</div>
+      </div>
+      <div style="position:relative;margin-top:8px">
+        <svg viewBox="0 0 640 230" style="width:100%;height:auto;display:block;overflow:visible">
+          <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="4">
+            <line x1="44" x2="628" y1="{{ t.y }}" y2="{{ t.y }}" stroke="{{ t.stroke }}" stroke-width="1"></line>
+          </sc-for>
+          <path d="{{ chartPath }}" fill="none" stroke="{{ chartColor }}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+          <circle cx="{{ lastX }}" cy="{{ lastY }}" r="5" fill="{{ chartColor }}"></circle>
+        </svg>
+        <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="4">
+          <span class="type-label-medium" style="position:absolute;left:0;width:36px;text-align:right;transform:translateY(-50%);color:var(--text-muted);font-variant-numeric:tabular-nums;top:{{ t.pct }}">{{ t.label }}</span>
+        </sc-for>
+      </div>
+      <div style="position:relative;height:18px;margin-top:6px">
+        <sc-for list="{{ xLabels }}" as="x" hint-placeholder-count="3">
+          <span class="type-label-medium" style="position:absolute;color:var(--text-muted);white-space:nowrap;left:{{ x.pct }};transform:{{ x.tf }}">{{ x.label }}</span>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <sc-for list="{{ periods }}" as="p" hint-placeholder-count="4">
+          <button onClick="{{ p.select }}" style="flex:1;min-width:64px;height:44px;border:none;border-radius:var(--radius-full);cursor:pointer;font-size:15px;font-weight:500;font-family:inherit;background:{{ p.bg }};color:{{ p.fg }}">{{ p.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding:22px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="type-title-medium">포트폴리오</div>
+        <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Button" variant="text" size="s" icon="ChevronForward" on-click="{{ goHoldings }}" hint-size="auto,32px">종목 상세</x-import>
+      </div>
+      <div class="type-label-medium" style="color:var(--text-muted);margin-top:14px">현재 보유비중 (%)</div>
+      <div style="display:flex;height:48px;border-radius:12px;overflow:hidden;margin-top:8px">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:15px;overflow:hidden;white-space:nowrap;background:{{ g.color }};width:{{ g.curW }}">{{ g.barLabel }}</div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;margin-top:8px">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div>
+            <button onClick="{{ g.toggle }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:14px 0;border:none;background:transparent;cursor:pointer;font-family:inherit;color:inherit;text-align:left">
+              <span style="width:14px;height:14px;border-radius:4px;background:{{ g.color }}"></span>
+              <span class="type-body-large" style="flex:1">{{ g.name }}</span>
+              <span class="type-title-medium" style="font-variant-numeric:tabular-nums">{{ g.curFmt }}</span>
+              <span class="type-label-medium" style="color:var(--text-muted);width:64px;text-align:right">목표 {{ g.targetFmt }}</span>
+              <span style="display:flex;color:var(--text-muted)"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.Icon" name="{{ g.chevron }}" size="20" hint-size="20px,20px"></x-import></span>
+            </button>
+            <sc-if value="{{ g.open }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--schemes-surface-container-low);border-radius:10px;padding:4px 14px;margin-bottom:6px">
+                <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)">
+                    <div style="flex:1;min-width:0">
+                      <div class="type-body-medium" style="font-weight:500">{{ it.name }}</div>
+                      <div class="type-label-small" style="color:var(--text-muted)">{{ it.code }} · {{ it.cls }}</div>
+                    </div>
+                    <span class="type-body-large" style="font-variant-numeric:tabular-nums;font-weight:500">{{ it.curPctFmt }}</span>
+                    <span class="type-label-medium" style="color:var(--text-muted);width:64px;text-align:right">목표 {{ it.targetPctFmt }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding:22px;background:var(--schemes-surface);cursor:pointer;box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box" onClick="{{ goRebalance }}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="type-title-medium">리밸런싱 필요도</div>
+        <span class="type-label-large" style="padding:4px 12px;border-radius:var(--radius-full);background:{{ needBg }};color:{{ needFg }}">{{ needLabel }}</span>
+      </div>
+      <div style="position:relative;margin-top:22px;height:10px;border-radius:5px;background:linear-gradient(90deg,oklch(0.72 0.17 150),oklch(0.85 0.17 95) 50%,oklch(0.62 0.21 25))">
+        <div style="position:absolute;top:-6px;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--schemes-on-surface);box-sizing:border-box;transform:translateX(-50%);left:{{ needPos }}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px" class="type-body-medium">
+        <span style="color:{{ lowC }};font-weight:{{ lowW }}">낮음</span><span style="color:{{ midC }};font-weight:{{ midW }}">보통</span><span style="color:{{ highC }};font-weight:{{ highW }}">높음</span>
+      </div>
+      <div class="type-body-medium" style="color:var(--text-muted);margin-top:18px;line-height:1.6">
+        <div>· {{ needText }}</div>
+        <div>· 조정 필요 금액 {{ turnoverFmt }}원 ({{ turnoverPctFmt }} of 포트폴리오)</div>
+        <div>· 최근 리밸런싱: {{ lastRebalance }}</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ 그 외 탭 ============ -->
+  <sc-if value="{{ showWide }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1200px;width:100%;margin:0 auto;padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+
+    <!-- 종목 -->
+    <sc-if value="{{ show1 }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:20px;background:var(--schemes-surface);display:flex;flex-direction:column;gap:12px;box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="type-title-medium">보유 종목</div>
+            <div class="type-body-small" style="color:var(--text-muted);margin-top:2px">현재가·보유량은 셀을 눌러 수정. 변경은 이 기기에 저장됩니다.</div>
+          </div>
+          <label class="type-body-medium" style="display:flex;align-items:center;gap:8px">투자원금
+            <input type="number" value="{{ investedStr }}" onChange="{{ setInvested }}" style="width:150px;height:40px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;font-variant-numeric:tabular-nums;background:var(--schemes-surface);color:var(--schemes-on-surface);font-size:15px">
+          </label>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <table style="width:100%;min-width:900px;border-collapse:collapse;font-variant-numeric:tabular-nums" class="type-body-medium">
+            <thead>
+              <tr class="type-label-large" style="background:var(--schemes-surface-container);text-align:right">
+                <th style="white-space:nowrap;text-align:left;padding:12px 14px;font-weight:500">종목</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">목표</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">현재</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">현재가</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">보유량</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">평가금액</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">절대이격</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">상대이격</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ assets }}" as="a" hint-placeholder-count="10">
+                <tr style="text-align:right">
+                  <td style="text-align:left;padding:10px 14px;border-top:1px solid var(--border)">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span style="width:10px;height:10px;border-radius:3px;flex:none;background:{{ a.groupColor }}"></span>
+                      <div>
+                        <div style="font-weight:500">{{ a.name }}</div>
+                        <div class="type-label-small" style="color:var(--text-muted)">{{ a.code }} · {{ a.cls }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)">{{ a.targetPctFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border);font-weight:500">{{ a.curPctFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)"><input type="number" value="{{ a.priceStr }}" onChange="{{ a.onPrice }}" style="width:100px;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-xs);text-align:right;background:var(--schemes-primary-container);color:var(--schemes-on-primary-container);font-variant-numeric:tabular-nums;font-size:14px;font-weight:500"></td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)"><input type="number" value="{{ a.heldStr }}" onChange="{{ a.onHeld }}" style="width:88px;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-xs);text-align:right;background:var(--schemes-primary-container);color:var(--schemes-on-primary-container);font-variant-numeric:tabular-nums;font-size:14px;font-weight:500"></td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)">{{ a.evalFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border);color:{{ a.devColor }};font-weight:500">{{ a.absFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)"><span class="type-label-medium" style="padding:3px 9px;border-radius:var(--radius-full);background:{{ a.statusBg }};color:{{ a.statusFg }}">{{ a.relFmt }}</span></td>
+                </tr>
+              </sc-for>
+              <tr style="text-align:right;font-weight:500;background:var(--schemes-surface-container)">
+                <td style="text-align:left;padding:14px;border-top:2px solid var(--border-strong)">합계</td>
+                <td style="padding:14px;border-top:2px solid var(--border-strong)">100.0%</td>
+                <td style="padding:14px;border-top:2px solid var(--border-strong)">100.0%</td>
+                <td style="border-top:2px solid var(--border-strong)"></td><td style="border-top:2px solid var(--border-strong)"></td>
+                <td style="padding:14px;border-top:2px solid var(--border-strong)">{{ totalEvalFmt }}</td>
+                <td style="border-top:2px solid var(--border-strong)"></td><td style="border-top:2px solid var(--border-strong)"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-title-medium">변경 이력</div>
+          <div class="type-body-small" style="color:var(--text-muted);margin-top:2px">서버에 기록된 최근 30건. 모든 변경 시점의 전체 데이터가 복구용으로 보존됩니다.</div>
+          <div style="display:flex;flex-direction:column;margin-top:8px">
+            <sc-for list="{{ history }}" as="hh" hint-placeholder-count="5">
+              <div style="display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--border)" class="type-body-medium">
+                <span style="color:var(--text-muted);white-space:nowrap;font-variant-numeric:tabular-nums">{{ hh.date }}</span>
+                <span style="font-weight:500;white-space:nowrap">{{ hh.who }}</span>
+                <span style="flex:1;min-width:0">{{ hh.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- 리밸런싱 -->
+    <sc-if value="{{ show2 }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ needRebalance }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:12px;align-items:center;padding:14px 16px;background:var(--schemes-error-container);color:var(--schemes-on-error-container);flex-wrap:wrap;border-radius:var(--radius-md);box-sizing:border-box">
+          <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Icon" name="Notifications" size="22" hint-size="22px,22px"></x-import>
+          <div class="type-body-medium" style="flex:1;min-width:200px;font-weight:500">{{ alertText }}</div>
+        </div>
+      </sc-if>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">판정</div>
+          <div class="type-headline-small" style="margin-top:6px;display:flex;align-items:center;gap:8px;color:{{ needFg }}"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.Icon" name="{{ statusIcon }}" size="26" hint-size="26px,26px"></x-import>{{ rebalanceStatus }}</div>
+          <div class="type-body-small" style="color:var(--text-muted);margin-top:6px">{{ accountLabel }} 룰 · 상대 {{ relThreshFmt }} 또는 절대 {{ absThreshFmt }} 초과 시, 또는 연 1회</div>
+        </div>
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">마지막 리밸런싱</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap">
+            <input type="date" value="{{ lastRebalance }}" onChange="{{ setLastRebalance }}" style="height:38px;padding:0 10px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);background:var(--schemes-surface);color:var(--schemes-on-surface);font-size:14px">
+            <span class="type-body-medium">{{ daysSinceFmt }}</span>
+          </div>
+          <div style="margin-top:10px"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.ProgressIndicator" variant="linear" value="{{ annualPct }}" hint-size="100%,4px"></x-import></div>
+          <div class="type-body-small" style="color:var(--text-muted);margin-top:6px">다음 정기 리밸런싱 {{ nextAnnualFmt }}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div style="padding:16px 18px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:12px;height:12px;border-radius:4px;background:{{ g.color }}"></span>
+              <div class="type-title-small" style="flex:1">{{ g.name }}</div>
+              <span class="type-label-medium" style="color:var(--text-muted)">{{ g.count }}종목</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
+              <span class="type-headline-small" style="font-variant-numeric:tabular-nums">{{ g.curFmt }}</span>
+              <span class="type-body-small" style="color:var(--text-muted)">/ 목표 {{ g.targetFmt }}</span>
+            </div>
+            <div class="type-body-small" style="margin-top:2px;color:{{ g.devColor }};font-weight:500">{{ g.devFmt }}</div>
+            <div style="position:relative;height:6px;background:var(--schemes-surface-container-high);border-radius:3px;margin-top:10px">
+              <div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;background:{{ g.color }};width:{{ g.curW }}"></div>
+              <div style="position:absolute;top:-4px;width:2px;height:14px;background:var(--schemes-on-surface);left:{{ g.targetW }}"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding:20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div class="type-title-medium">종목별 이격</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+              <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Chip" type="filter" label="{{ f.label }}" selected="{{ f.selected }}" on-click="{{ f.select }}" hint-size="auto,32px"></x-import>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:16px">
+          <sc-for list="{{ filteredAssets }}" as="a" hint-placeholder-count="10">
+            <div style="padding:0;overflow:hidden;background:var(--schemes-surface);border:1px solid var(--border);border-radius:var(--radius-md);box-sizing:border-box">
+              <div style="height:6px;background:{{ a.groupColor }}"></div>
+              <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+                  <div>
+                    <div class="type-body-medium" style="font-weight:500;line-height:1.3">{{ a.name }}</div>
+                    <div class="type-label-small" style="color:var(--text-muted);font-family:var(--font-mono)">{{ a.code }}</div>
+                  </div>
+                  <span class="type-label-small" style="padding:3px 9px;border-radius:var(--radius-full);white-space:nowrap;background:{{ a.statusBg }};color:{{ a.statusFg }}">{{ a.status }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between" class="type-body-small">
+                  <span style="font-variant-numeric:tabular-nums"><span style="font-weight:500;color:var(--schemes-on-surface)">{{ a.curPctFmt }}</span><span style="color:var(--text-muted)"> / {{ a.targetPctFmt }}</span></span>
+                  <span style="font-weight:500;color:{{ a.devColor }}">상대 {{ a.relFmt }}</span>
+                </div>
+                <div style="height:6px;background:var(--schemes-surface-container-high);border-radius:var(--radius-full);position:relative">
+                  <div style="position:absolute;top:0;height:100%;border-radius:var(--radius-full);background:{{ a.devColor }};left:{{ a.devLeft }};width:{{ a.devW }}"></div>
+                  <div style="position:absolute;top:-2px;left:50%;width:1px;height:10px;background:var(--schemes-on-surface)"></div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:8px 4px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div class="type-title-medium" style="padding:12px 16px 4px">트리거 현황</div>
+        <sc-for list="{{ triggers }}" as="t" hint-placeholder-count="4">
+          <x-import component-from-global-scope="OctudDesignSystem_46f0ba.ListItem" headline="{{ t.title }}" supporting="{{ t.detail }}" leading="{{ t.leading }}" trailing="{{ t.trailing }}" hint-size="100%,72px"></x-import>
+        </sc-for>
+      </div>
+
+      <div style="padding:20px;background:var(--schemes-surface);display:flex;flex-direction:column;gap:12px;box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="type-title-medium">실행 체크리스트</div>
+            <div class="type-body-small" style="color:var(--text-muted);margin-top:2px">현재가 기준 목표주식수 − 보유량. 추가 납입이 있으면 금액을 입력하세요.</div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+            <label class="type-body-medium" style="display:flex;align-items:center;gap:8px">완료 숨기기
+              <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Switch" checked="{{ hideDone }}" on-change="{{ toggleHideDone }}" hint-size="52px,32px"></x-import>
+            </label>
+            <label class="type-body-medium" style="display:flex;align-items:center;gap:8px">추가 납입
+              <input type="number" value="{{ extraCashStr }}" onChange="{{ setExtraCash }}" placeholder="0" style="width:150px;height:40px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;font-variant-numeric:tabular-nums;background:var(--schemes-surface);color:var(--schemes-on-surface);font-size:15px">
+            </label>
+          </div>
+        </div>
+        <div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <table style="width:100%;min-width:680px;border-collapse:collapse;font-variant-numeric:tabular-nums" class="type-body-medium">
+            <thead>
+              <tr class="type-label-large" style="background:var(--schemes-surface-container);text-align:right">
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500;text-align:center;width:48px">완료</th>
+                <th style="white-space:nowrap;text-align:left;padding:12px 14px;font-weight:500">종목</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">목표주식수</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">보유량</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">주문</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">예상금액</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ visibleChecklist }}" as="c" hint-placeholder-count="10">
+                <tr style="text-align:right;opacity:{{ c.opacity }}">
+                  <td style="padding:6px 14px;border-top:1px solid var(--border);text-align:center"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.Checkbox" checked="{{ c.done }}" on-change="{{ c.toggle }}" hint-size="40px,40px"></x-import></td>
+                  <td style="text-align:left;padding:10px 14px;border-top:1px solid var(--border);font-weight:500"><div style="display:flex;align-items:center;gap:10px"><span style="width:10px;height:10px;border-radius:3px;flex:none;background:{{ c.groupColor }}"></span>{{ c.name }}</div></td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)">{{ c.targetQty }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)">{{ c.held }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)"><span class="type-label-large" style="padding:4px 10px;border-radius:var(--radius-full);background:{{ c.bg }};color:{{ c.fg }};white-space:nowrap">{{ c.order }}</span></td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)">{{ c.amountFmt }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Chip" type="assist" icon="ArrowDropUp" label="{{ buySummary }}" hint-size="auto,32px"></x-import>
+            <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Chip" type="assist" icon="ArrowDropDown" label="{{ sellSummary }}" hint-size="auto,32px"></x-import>
+            <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Chip" type="assist" icon="SwapHoriz" label="{{ netSummary }}" hint-size="auto,32px"></x-import>
+          </div>
+          <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Button" variant="filled" size="s" icon="Check" on-click="{{ applyRebalance }}" hint-size="auto,32px">체결 반영</x-import>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 수익률 -->
+    <sc-if value="{{ show3 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">포트폴리오 TWR</div>
+          <div class="type-headline-medium" style="margin-top:6px;font-variant-numeric:tabular-nums;color:{{ twrColor }}">{{ twrFmt }}</div>
+          <div class="type-body-small" style="color:var(--text-muted)">기준가 {{ navFmt }}</div>
+        </div>
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">S&amp;P 500 (동기간)</div>
+          <div class="type-headline-medium" style="margin-top:6px;font-variant-numeric:tabular-nums">{{ spRetFmt }}</div>
+          <div class="type-body-small" style="color:var(--text-muted)">초과수익 {{ vsSpFmt }}</div>
+        </div>
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">코스피 (동기간)</div>
+          <div class="type-headline-medium" style="margin-top:6px;font-variant-numeric:tabular-nums">{{ kospiRetFmt }}</div>
+          <div class="type-body-small" style="color:var(--text-muted)">초과수익 {{ vsKospiFmt }}</div>
+        </div>
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">누적 납입</div>
+          <div class="type-title-large" style="margin-top:6px;font-variant-numeric:tabular-nums">{{ depositTotalFmt }}</div>
+          <div class="type-body-small" style="margin-top:2px;font-weight:500;color:{{ cumPnlColor }}">손익누계 {{ cumPnlFmt }}</div>
+        </div>
+      </div>
+
+      <div style="padding:20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">
+          <div class="type-title-medium">기준가 추이 (시작 = 100)</div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap" class="type-label-medium">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:4px;border-radius:2px;background:var(--schemes-primary)"></span>포트폴리오</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:4px;border-radius:2px;background:oklch(0.62 0.17 290)"></span>S&amp;P 500</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:4px;border-radius:2px;background:oklch(0.75 0.15 80)"></span>코스피</span>
+          </div>
+        </div>
+        <div style="position:relative;margin-top:12px">
+        <svg viewBox="0 0 640 220" style="width:100%;height:auto;display:block" preserveAspectRatio="none">
+          <line x1="40" y1="200" x2="630" y2="200" stroke="var(--schemes-outline-variant)" stroke-width="1"></line>
+          <line x1="40" y1="110" x2="630" y2="110" stroke="var(--schemes-outline-variant)" stroke-width="1" stroke-dasharray="2 4"></line>
+          <line x1="40" y1="20" x2="630" y2="20" stroke="var(--schemes-outline-variant)" stroke-width="1" stroke-dasharray="2 4"></line>
+          <path d="{{ kospiPath }}" fill="none" stroke="oklch(0.75 0.15 80)" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+          <path d="{{ spPath }}" fill="none" stroke="oklch(0.62 0.17 290)" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+          <path d="{{ navPath }}" fill="none" stroke="var(--schemes-primary)" stroke-width="3" vector-effect="non-scaling-stroke"></path>
+        </svg>
+        <span class="type-label-small" style="position:absolute;left:0;width:34px;text-align:right;color:var(--text-muted);top:90.9%;transform:translateY(-50%)">{{ yMinFmt }}</span>
+        <span class="type-label-small" style="position:absolute;left:0;width:34px;text-align:right;color:var(--text-muted);top:50%;transform:translateY(-50%)">{{ yMidFmt }}</span>
+        <span class="type-label-small" style="position:absolute;left:0;width:34px;text-align:right;color:var(--text-muted);top:9.1%;transform:translateY(-50%)">{{ yMaxFmt }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between" class="type-label-small">
+          <span style="color:var(--text-muted);padding-left:40px">{{ twrSince }}</span>
+          <span style="color:var(--text-muted)">{{ twrUntil }}</span>
+        </div>
+      </div>
+
+      <div style="padding:20px;background:var(--schemes-surface);display:flex;flex-direction:column;gap:12px;box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="type-title-medium">입금 · 잔고 히스토리</div>
+            <div class="type-body-small" style="color:var(--text-muted);margin-top:2px">기간수익률 = (잔고 − 납입) ÷ 전기 잔고 − 1. 증권사 거래내역 업로드는 샘플 수신 후 연결.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Button" variant="tonal" size="s" icon="Today" on-click="{{ takeSnapshot }}" hint-size="auto,32px">오늘 평가금 기록</x-import>
+            <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Button" variant="outlined" size="s" icon="Upload" disabled="{{ true }}" hint-size="auto,32px">거래내역 업로드</x-import>
+          </div>
+        </div>
+        <sc-if value="{{ serverMode }}" hint-placeholder-val="{{ false }}">
+          <div class="type-body-small" style="color:var(--text-muted)">일일 자동 스냅샷 {{ dailyCount }}건 — 평일 16:30 서버가 평가금을 기록해 홈 수익률 곡선에 반영됩니다.</div>
+        </sc-if>
+        <div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <table style="width:100%;min-width:760px;border-collapse:collapse;font-variant-numeric:tabular-nums" class="type-body-medium">
+            <thead>
+              <tr class="type-label-large" style="background:var(--schemes-surface-container);text-align:right">
+                <th style="white-space:nowrap;text-align:left;padding:12px 14px;font-weight:500">일자</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">납입</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">계좌잔고</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">기간수익률</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">기준가</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">S&amp;P 500</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">코스피</th>
+                <th style="white-space:nowrap;padding:12px 14px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ twrRows }}" as="r" hint-placeholder-count="5">
+                <tr style="text-align:right">
+                  <td style="text-align:left;padding:10px 14px;border-top:1px solid var(--border);font-weight:500">{{ r.date }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border);color:var(--schemes-primary);font-weight:500">{{ r.depositFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)">{{ r.balanceFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border)"><span class="type-label-medium" style="padding:3px 9px;border-radius:var(--radius-full);background:{{ r.retBg }};color:{{ r.retFg }}">{{ r.retFmt }}</span></td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border);font-weight:500">{{ r.navFmt }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border);color:var(--text-muted)">{{ r.sp }}</td>
+                  <td style="padding:10px 14px;border-top:1px solid var(--border);color:var(--text-muted)">{{ r.kospi }}</td>
+                  <td style="padding:4px 8px;border-top:1px solid var(--border)"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.IconButton" icon="Delete" size="s" aria-label="삭제" on-click="{{ r.remove }}" hint-size="32px,32px"></x-import></td>
+                </tr>
+              </sc-for>
+              <tr style="text-align:right;background:var(--schemes-primary-container)">
+                <td style="padding:8px 8px"><input type="date" value="{{ nd.date }}" onChange="{{ nd.setDate }}" style="height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);background:var(--schemes-surface);color:var(--schemes-on-surface);font-size:14px"></td>
+                <td style="padding:8px"><input type="number" value="{{ nd.deposit }}" onChange="{{ nd.setDeposit }}" placeholder="0" style="width:120px;height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;background:var(--schemes-surface);color:var(--schemes-on-surface)"></td>
+                <td style="padding:8px"><input type="number" value="{{ nd.balance }}" onChange="{{ nd.setBalance }}" placeholder="잔고" style="width:130px;height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;background:var(--schemes-surface);color:var(--schemes-on-surface)"></td>
+                <td colspan="2" style="padding:8px;color:var(--schemes-on-primary-container)" class="type-label-medium">자동계산</td>
+                <td style="padding:8px"><input type="number" value="{{ nd.sp }}" onChange="{{ nd.setSp }}" placeholder="S&amp;P" style="width:84px;height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;background:var(--schemes-surface);color:var(--schemes-on-surface)"></td>
+                <td style="padding:8px"><input type="number" value="{{ nd.kospi }}" onChange="{{ nd.setKospi }}" placeholder="코스피" style="width:84px;height:36px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);text-align:right;background:var(--schemes-surface);color:var(--schemes-on-surface)"></td>
+                <td style="padding:4px 8px"><x-import component-from-global-scope="OctudDesignSystem_46f0ba.IconButton" icon="Add" variant="filled" size="s" aria-label="행 추가" on-click="{{ nd.add }}" hint-size="32px,32px"></x-import></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 로드맵 -->
+    <sc-if value="{{ show4 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">2055년 유보금</div>
+          <div class="type-headline-medium" style="margin-top:6px">{{ rmFinalReserve }}<span class="type-title-small">억</span></div>
+          <div class="type-body-small" style="color:var(--text-muted)">현재가치 (인플레 2%) {{ rmPvReserve }}억</div>
+        </div>
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">2055년 연 투자수익</div>
+          <div class="type-headline-medium" style="margin-top:6px">{{ rmFinalInc }}<span class="type-title-small">억</span></div>
+          <div class="type-body-small" style="color:var(--text-muted)">현재가치 {{ rmPvInc }}억</div>
+        </div>
+        <div style="padding:18px 20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+          <div class="type-label-medium" style="color:var(--text-muted)">투자수익 &gt; 사업비용 전환 연도</div>
+          <div class="type-headline-medium" style="margin-top:6px">{{ rmCrossYear }}</div>
+          <div class="type-body-small" style="color:var(--text-muted)">유보금 투자비율 60~80% 가정</div>
+        </div>
+      </div>
+
+      <div style="padding:20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline">
+          <div class="type-title-medium">유보금 · 투자수익 전망 (단위: 억)</div>
+          <div style="display:flex;gap:16px" class="type-label-medium">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:var(--schemes-primary);border-radius:3px"></span>유보금</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:oklch(0.62 0.17 290);border-radius:3px"></span>연 투자수익</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:200px;margin-top:16px">
+          <sc-for list="{{ roadmap }}" as="y" hint-placeholder-count="31">
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:2px" title="{{ y.year }}">
+              <div style="background:oklch(0.62 0.17 290);border-radius:3px 3px 0 0;height:{{ y.incH }}"></div>
+              <div style="background:var(--schemes-primary);border-radius:3px;height:{{ y.reserveH }}"></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px" class="type-label-small">
+          <span style="color:var(--text-muted)">2025</span><span style="color:var(--text-muted)">2040</span><span style="color:var(--text-muted)">2055</span>
+        </div>
+      </div>
+
+      <div style="padding:20px;background:var(--schemes-surface);box-shadow:var(--elevation-1);border-radius:var(--radius-md);box-sizing:border-box">
+        <div class="type-title-medium">연도별 시뮬레이션</div>
+        <div style="overflow-x:auto;margin-top:12px;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <table style="width:100%;min-width:800px;border-collapse:collapse;font-variant-numeric:tabular-nums" class="type-body-medium">
+            <thead>
+              <tr class="type-label-large" style="background:var(--schemes-surface-container);text-align:right">
+                <th style="white-space:nowrap;text-align:left;padding:12px 14px;font-weight:500">연도</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">유보금</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">사업수익</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">사업비용</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">투자비율</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">투자수익</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">총수익</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">세율</th>
+                <th style="white-space:nowrap;padding:12px 14px;font-weight:500">세후순익</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ roadmap }}" as="y" hint-placeholder-count="31">
+                <tr style="text-align:right">
+                  <td style="text-align:left;padding:8px 14px;border-top:1px solid var(--border);font-weight:500">{{ y.year }} <span class="type-label-small" style="color:var(--text-muted)">{{ y.label }}</span></td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border);font-weight:500;color:var(--schemes-primary)">{{ y.reserve }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border)">{{ y.biz }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border)">{{ y.cost }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border)">{{ y.ratio }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border);font-weight:500;color:oklch(0.5 0.17 290)">{{ y.inc }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border)">{{ y.total }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border)">{{ y.tax }}</td>
+                  <td style="padding:8px 14px;border-top:1px solid var(--border);font-weight:500">{{ y.net }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <div class="type-body-small" style="color:var(--text-muted);text-align:center;padding:12px 0 24px">{{ footerNote }}</div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ hasSnack }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:2000;max-width:calc(100vw - 32px)">
+      <x-import component-from-global-scope="OctudDesignSystem_46f0ba.Snackbar" message="{{ snack }}" on-close="{{ closeSnack }}" hint-size="320px,48px"></x-import>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;blue-lt&quot;,&quot;indigo-lt&quot;,&quot;teal-lt&quot;,&quot;green-lt&quot;,&quot;purple-lt&quot;,&quot;orange-lt&quot;,&quot;monochrome-lt&quot;,&quot;blue-dt&quot;,&quot;teal-dt&quot;],&quot;default&quot;:&quot;blue-lt&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;테마&quot;},&quot;accountName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Octud 법인 · 자산배분 성장형&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;계좌&quot;},&quot;accountType&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;과세계좌&quot;,&quot;절세계좌&quot;],&quot;default&quot;:&quot;과세계좌&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;relThreshold&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.25,&quot;min&quot;:0.05,&quot;max&quot;:0.5,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;absThreshold&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:0.05,&quot;min&quot;:0.01,&quot;max&quot;:0.2,&quot;step&quot;:0.01,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;리밸런싱 룰&quot;},&quot;password&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;octud&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;접근&quot;},&quot;priceEndpoint&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;시세 연동&quot;}}">
+const KEY = 'octud-invest-v2';
+const DEFAULT_ASSETS = [
+  { code:'379810', name:'KODEX 미국나스닥 100', cls:'미국', group:'주식', target:0.095, price:27525, held:1649 },
+  { code:'458730', name:'TIGER 미국배당다우존스', cls:'미국', group:'주식', target:0.10, price:14070, held:3165 },
+  { code:'241180', name:'TIGER 일본니케이 225', cls:'일본', group:'주식', target:0.045, price:35370, held:610 },
+  { code:'152100', name:'PLUS 200', cls:'한국', group:'주식', target:0.08, price:111080, held:338 },
+  { code:'283580', name:'KODEX 차이나 CSI 300', cls:'중국 (UH)', group:'주식', target:0.08, price:14330, held:2487 },
+  { code:'453810', name:'KODEX 인도 Nifty 50', cls:'인도 (UH)', group:'주식', target:0.08, price:10765, held:3319 },
+  { code:'411060', name:'ACE KRX 금현물', cls:'금 (UH)', group:'대체', target:0.20, price:25495, held:3451 },
+  { code:'476760', name:'ACE 미국30년 국채액티브', cls:'미국 30년', group:'채권', target:0.15, price:8300, held:7890 },
+  { code:'385560', name:'RISE KIS국고채 30년 Enhanced', cls:'한국 30년', group:'채권', target:0.14, price:51245, held:1309 },
+  { code:'469830', name:'SOL 초단기채권액티브', cls:'초단기채', group:'현금성', target:0.03, price:54535, held:235 },
+];
+const DEFAULT_TWR = [
+  { date:'2025-08-01', deposit:100000000, balance:100000000, sp:6345, kospi:3227 },
+  { date:'2025-09-03', deposit:0, balance:102061167, sp:6448, kospi:3200 },
+  { date:'2025-10-09', deposit:100000000, balance:211054090, sp:6735, kospi:3610 },
+  { date:'2025-12-10', deposit:0, balance:215768000, sp:6886, kospi:4135 },
+  { date:'2026-01-26', deposit:0, balance:225653000, sp:6950, kospi:5018 },
+];
+const ROADMAP = [
+[2025,18,8,3,0,0,5,0.1,4.5],[2026,22.5,8.5,3.5,0.2,0.288,5.288,0.1,4.759],[2027,27.26,10,3.5,0.3,0.54,7.04,0.1,6.336],[2028,33.6,10,3.5,0.4,0.872,7.372,0.1,6.635],[2029,40.23,11,3.5,0.6,1.613,9.113,0.2,7.29],[2030,47.52,12,4.5,0.6,1.931,9.431,0.2,7.545],[2031,55.07,11,4.5,0.6,2.281,8.781,0.2,7.025],[2032,62.09,11,4.5,0.6,2.643,9.143,0.2,7.315],[2033,69.4,11,4.5,0.6,2.98,9.48,0.2,7.584],[2034,76.99,11,5,0.6,3.331,9.331,0.2,7.465],[2035,84.45,9,5,0.6,3.695,7.695,0.2,6.156],[2036,90.61,8,5.5,0.6,4.054,6.554,0.2,5.243],[2037,95.85,8,6,0.6,4.349,6.349,0.2,5.079],[2038,100.93,7,6,0.6,4.601,5.601,0.2,4.481],[2039,105.41,6,6,0.6,4.845,4.845,0.2,3.876],[2040,109.29,5,6,0.6,5.06,4.06,0.2,3.248],[2041,112.54,5,6,0.6,5.246,4.246,0.2,3.397],[2042,115.93,5,6,0.6,5.402,4.402,0.2,3.521],[2043,119.46,4,6,0.7,6.492,4.492,0.2,3.594],[2044,123.05,2,6,0.7,6.689,2.689,0.2,2.152],[2045,125.2,2,6,0.7,6.891,2.891,0.2,2.313],[2046,127.51,2,6,0.7,7.011,3.011,0.2,2.409],[2047,129.92,2,6,0.8,8.161,4.161,0.2,3.329],[2048,133.25,2,7,0.8,8.315,3.315,0.2,2.652],[2049,135.9,2,7,0.8,8.528,3.528,0.2,2.822],[2050,138.73,2,7,0.8,8.698,3.698,0.2,2.958],[2051,141.68,0,7,0.8,8.878,1.878,0.1,1.691],[2052,143.37,0,7,0.8,9.068,2.068,0.2,1.654],[2053,145.03,0,7,0.8,9.176,2.176,0.2,1.741],[2054,146.77,0,7,0.8,9.282,2.282,0.2,1.825],[2055,148.59,0,7,0.8,9.393,2.393,0.2,1.915]];
+const GAIN = 'oklch(0.55 0.21 25)', GAIN_BG = 'oklch(0.94 0.05 25)', LOSS = 'oklch(0.52 0.18 250)', LOSS_BG = 'oklch(0.93 0.05 250)';
+const GROUPS = [
+  { key:'주식',  color:'oklch(0.62 0.18 290)' },
+  { key:'대체',  color:'oklch(0.62 0.18 250)' },
+  { key:'채권',  color:'oklch(0.78 0.12 215)' },
+  { key:'현금성', color:'oklch(0.82 0.16 90)' },
+];
+const GCOLOR = Object.fromEntries(GROUPS.map(g=>[g.key,g.color]));
+const won = n => Math.round(n).toLocaleString('ko-KR');
+const pct = (x, d=1) => (x*100).toFixed(d) + '%';
+const spct = (x, d=1) => (x>=0?'+':'') + (x*100).toFixed(d) + '%';
+const niceStep = r => { const raw = r/4, p = Math.pow(10, Math.floor(Math.log10(raw||1))); for (const m of [1,2,2.5,5,10]) if (m*p >= raw) return m*p; return 10*p; };
+
+class Component extends DCLogic {
+  constructor(p){
+    super(p);
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){}
+    this.state = {
+      locked: sessionStorage.getItem(KEY+'-auth') !== '1',
+      pw:'', pwError:false, tab:0, filter:'전체', hideDone:false, snack:'', period:'all', open:{ '주식':true },
+      assets: DEFAULT_ASSETS.map(a => { const sv = (saved.assets||[]).find(x=>x.code===a.code); return sv ? { ...a, price: Number(sv.price)||a.price, held: Number(sv.held)||0 } : { ...a }; }),
+      twr: saved.twr || DEFAULT_TWR.map(r=>({...r})),
+      invested: saved.invested ?? 470000000,
+      lastRebalance: saved.lastRebalance || '2025-10-09',
+      priceAsOf: saved.priceAsOf || '시트 저장 시점', live: !!saved.live,
+      extraCash: 0, done: {}, refreshing:false,
+      token: sessionStorage.getItem(KEY+'-token') || '', daily: [], history: [], syncing:false, syncError:'',
+      who: localStorage.getItem(KEY+'-who') || '',
+      nd: { date: new Date().toISOString().slice(0,10), deposit:'', balance:'', sp:'', kospi:'' },
+    };
+  }
+  applyTheme(){ document.documentElement.setAttribute('data-mode', this.props.theme || 'blue-lt'); }
+  get api(){ return (this.props.apiBase || '').trim().replace(/\/$/, ''); }
+  componentDidMount(){ this.applyTheme(); if (this.api && this.state.token && !this.state.locked) this.loadServer(); }
+  componentDidUpdate(prev){ if (prev.theme !== this.props.theme) this.applyTheme(); if (prev.apiBase !== this.props.apiBase && this.api && this.state.token && !this.state.locked) this.loadServer(); }
+  async call(path, opts={}){
+    const res = await fetch(this.api + path, { ...opts, headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + this.state.token, ...(opts.headers||{}) } });
+    if (res.status === 401) { sessionStorage.removeItem(KEY+'-token'); sessionStorage.removeItem(KEY+'-auth'); this.setState({ token:'', locked:true }); throw new Error('인증 만료 — 다시 입장하세요'); }
+    if (!res.ok) throw new Error('서버 오류 ' + res.status);
+    return res.json();
+  }
+  localSnapshot(){ const { assets, twr, invested, lastRebalance, priceAsOf, live } = this.state; return { assets: assets.map(a=>({ code:a.code, price:a.price, held:a.held })), twr, invested, lastRebalance, priceAsOf, live }; }
+  mergeServer(st){
+    if (!st) return {};
+    const assets = this.state.assets.map(a => { const sv = (st.assets||[]).find(x=>x.code===a.code); return sv ? { ...a, price: Number(sv.price)||a.price, held: Number(sv.held)||0 } : a; });
+    return { assets, twr: st.twr || this.state.twr, invested: st.invested ?? this.state.invested, lastRebalance: st.lastRebalance || this.state.lastRebalance, priceAsOf: st.priceAsOf || this.state.priceAsOf, live: !!st.live };
+  }
+  async loadServer(){
+    this.setState({ syncing:true, syncError:'' });
+    try {
+      const { state, daily } = await this.call('/state');
+      if (!state) { await this.call('/state', { method:'PUT', body: JSON.stringify({ patch: { ...this.localSnapshot(), assets: this.state.assets.map(a=>({ ...a })) }, note:'초기 데이터 업로드', who: this.state.who || '팀' }) }); this.setState({ syncing:false, daily: daily||[] }); this.toast('서버에 초기 데이터를 저장했습니다.'); return; }
+      const merged = this.mergeServer(state);
+      this.setState({ ...merged, daily: daily||[], syncing:false }, () => { try { localStorage.setItem(KEY, JSON.stringify(this.localSnapshot())); } catch(e){} });
+      this.loadHistory();
+    } catch(e){ this.setState({ syncing:false, syncError: e.message }); this.toast('서버 연결 실패: ' + e.message); }
+  }
+  async loadHistory(){ try { const history = await this.call('/history?limit=30'); this.setState({ history }); } catch(e){} }
+  persist(patch, note){
+    this.setState(patch, () => {
+      try { localStorage.setItem(KEY, JSON.stringify(this.localSnapshot())); } catch(e){}
+      if (!this.api || !this.state.token) return;
+      const keys = ['assets','twr','invested','lastRebalance','priceAsOf','live'].filter(k => k in patch);
+      if (!keys.length) return;
+      this.pending = { ...(this.pending||{}), ...Object.fromEntries(keys.map(k => [k, k==='assets' ? this.state.assets.map(a=>({ code:a.code, name:a.name, group:a.group, target:a.target, price:a.price, held:a.held })) : this.state[k]])) };
+      this.pendingNotes = [...(this.pendingNotes||[]), note].filter(Boolean);
+      clearTimeout(this.syncT);
+      this.syncT = setTimeout(async () => {
+        const body = { patch: this.pending, note: [...new Set(this.pendingNotes)].join(' · ') || Object.keys(this.pending).join(', '), who: this.state.who || '팀' };
+        this.pending = null; this.pendingNotes = [];
+        this.setState({ syncing:true });
+        try { await this.call('/state', { method:'PUT', body: JSON.stringify(body) }); this.setState({ syncing:false, syncError:'' }); this.loadHistory(); }
+        catch(e){ this.setState({ syncing:false, syncError: e.message }); this.toast('서버 저장 실패: ' + e.message); }
+      }, 800);
+    });
+  }
+  toast(msg){ this.setState({ snack: msg }); clearTimeout(this.snackT); this.snackT = setTimeout(()=>this.setState({ snack:'' }), 4000); }
+  async refreshPrices(){
+    if (!this.api) { this.setState({ tab:1 }); this.toast('서버 주소(apiBase)가 없습니다. 종목 탭에서 현재가를 직접 입력하세요.'); return; }
+    this.setState({ refreshing:true });
+    try {
+      const codes = this.state.assets.map(a=>a.code).join(',');
+      const res = await fetch(`${this.api}/prices?codes=${codes}`);
+      const data = await res.json();
+      const assets = this.state.assets.map(a => data[a.code] ? { ...a, price: Number(data[a.code]) } : a);
+      const t = new Date();
+      this.persist({ assets, live:true, priceAsOf: `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`, refreshing:false }, '시세 갱신');
+      this.toast('시세를 갱신했습니다.');
+    } catch(e){ this.setState({ refreshing:false }); this.toast('시세 조회 실패: ' + e.message); }
+  }
+  async takeSnapshot(){
+    if (!this.api) { this.toast('서버 연결 후 사용할 수 있습니다.'); return; }
+    try { await this.call('/snapshot', { method:'POST' }); await this.loadServer(); this.toast('오늘 평가금을 기록했습니다.'); } catch(e){ this.toast('기록 실패: ' + e.message); }
+  }
+  async downloadBackup(){
+    const date = new Date().toISOString().slice(0,10);
+    let text;
+    if (this.api && this.state.token) {
+      try { const res = await fetch(this.api + '/backup?format=csv', { headers: { 'Authorization': 'Bearer ' + this.state.token } }); text = await res.text(); } catch(e){ this.toast('서버 백업 실패, 로컬 데이터로 내려받습니다.'); }
+    }
+    if (!text) {
+      const esc = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
+      const csv = (rows, cols) => [cols.map(esc).join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\n');
+      text = '\ufeff# assets\n' + csv(this.state.assets, ['code','name','group','target','price','held']) + '\n\n# deposits_balances\n' + csv(this.state.twr, ['date','deposit','balance','sp','kospi']) + `\n\n# meta\ninvested,${this.state.invested}\nlastRebalance,${this.state.lastRebalance}\n`;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type:'text/csv;charset=utf-8' })); a.download = `octud-invest-${date}.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  }
+  async unlock(typed, password){
+    if (this.api) {
+      try {
+        const res = await fetch(this.api + '/auth', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ password: typed }) });
+        if (!res.ok) { this.setState({ pwError:true }); return; }
+        const { token } = await res.json();
+        sessionStorage.setItem(KEY+'-token', token); sessionStorage.setItem(KEY+'-auth','1');
+        let who = this.state.who; if (!who) { who = (prompt('이력에 남길 이름을 입력하세요 (예: 홍길동)') || '팀').trim(); localStorage.setItem(KEY+'-who', who); }
+        this.setState({ locked:false, pw:'', token, who }, () => this.loadServer());
+      } catch(e){ this.toast('서버 연결 실패: ' + e.message + ' — 로컬 모드로 입장합니다.'); if (typed === String(password).trim()) { sessionStorage.setItem(KEY+'-auth','1'); this.setState({ locked:false, pw:'' }); } else this.setState({ pwError:true }); }
+      return;
+    }
+    if (typed === String(password).trim()) { sessionStorage.setItem(KEY+'-auth','1'); this.setState({ locked:false, pw:'' }); } else this.setState({ pwError:true });
+  }
+  renderVals(){
+    const s = this.state;
+    const accountType = this.props.accountType ?? '과세계좌';
+    const accountName = this.props.accountName ?? 'Octud 법인 · 자산배분 성장형';
+    const relT = this.props.relThreshold ?? (accountType === '절세계좌' ? 0.16 : 0.25);
+    const absT = this.props.absThreshold ?? (accountType === '절세계좌' ? 0.03 : 0.05);
+    const password = this.props.password ?? 'octud';
+    const h = React.createElement;
+
+    const total = s.assets.reduce((t,a)=>t+a.price*a.held, 0);
+    const pnl = total - s.invested;
+    let maxRel = 0, anyTrig = false, relTrig=false, absTrig=false, maxAbs=0, maxRelName='', turnover=0;
+    const assets = s.assets.map((a,i) => {
+      const ev = a.price*a.held, cur = total? ev/total : 0;
+      const abs = cur - a.target, rel = a.target ? Math.abs(cur/a.target - 1) : 0;
+      turnover += Math.abs(ev - total*a.target);
+      const trig = rel > relT || Math.abs(abs) > absT;
+      const warn = !trig && rel > relT*0.6;
+      if (rel > maxRel) { maxRel = rel; maxRelName = a.name; }
+      if (Math.abs(abs) > maxAbs) maxAbs = Math.abs(abs);
+      if (rel > relT) relTrig = true; if (Math.abs(abs) > absT) absTrig = true;
+      if (trig) anyTrig = true;
+      const over = abs >= 0;
+      const w = Math.min(50, Math.abs(abs)/(absT*2)*50);
+      return {
+        ...a, groupColor: GCOLOR[a.group], ev, cur, evalFmt: won(ev), targetPctFmt: pct(a.target), curPctFmt: pct(cur,2),
+        absFmt: spct(abs), relFmt: pct(rel), priceStr: String(a.price), heldStr: String(a.held),
+        status: trig ? '리밸런싱' : warn ? '주의' : '정상',
+        statusBg: trig ? 'var(--schemes-error-container)' : warn ? 'oklch(0.93 0.09 85)' : 'oklch(0.92 0.07 150)',
+        statusFg: trig ? 'var(--schemes-on-error-container)' : warn ? 'oklch(0.4 0.1 70)' : 'oklch(0.35 0.09 150)',
+        devColor: trig ? 'var(--schemes-error)' : over ? GAIN : LOSS,
+        devLeft: over ? '50%' : (50-w)+'%', devW: w+'%',
+        onPrice: e => { const v = Number(e.target.value); const arr = s.assets.map((x,j)=> j===i ? {...x, price: v} : x); this.persist({ assets: arr, live:false, priceAsOf:'수기 입력' }, `${a.name} 현재가 ${v.toLocaleString()}`); },
+        onHeld: e => { const v = Number(e.target.value); const arr = s.assets.map((x,j)=> j===i ? {...x, held: v} : x); this.persist({ assets: arr }, `${a.name} 보유량 ${v.toLocaleString()}`); },
+      };
+    });
+    turnover /= 2;
+    const turnoverPct = total ? turnover/total : 0;
+    const groups = GROUPS.map(gd => {
+      const list = assets.filter(a=>a.group===gd.key);
+      const ev = list.reduce((t,a)=>t+a.ev,0);
+      const cur = ev/(total||1), target = list.reduce((t,a)=>t+a.target,0);
+      const open = !!s.open[gd.key];
+      return { name: gd.key, color: gd.color, count: list.length, curFmt: pct(cur,2), targetFmt: pct(target), curW: pct(cur,2), targetW: pct(target,2),
+        barLabel: cur > 0.12 ? pct(cur,1) : '', devFmt: `이격 ${spct(cur-target)}`, devColor: Math.abs(cur-target) > absT ? 'var(--schemes-error)' : 'var(--text-muted)',
+        open, chevron: open ? 'KeyboardArrowUp' : 'KeyboardArrowDown', items: list,
+        toggle: () => this.setState({ open: { ...this.state.open, [gd.key]: !this.state.open[gd.key] } }) };
+    });
+    const donut = (() => { let acc=0; return groups.map(g=>{ const from=acc; acc+=parseFloat(g.curW); return `${g.color} ${from}% ${acc}%`; }).join(','); })();
+    const filteredAssets = s.filter==='전체' ? assets : assets.filter(a=>a.group===s.filter);
+    const filters = ['전체',...GROUPS.map(g=>g.key)].map(k=>({ label:k, selected: s.filter===k, select: () => this.setState({ filter:k }) }));
+
+    const last = new Date(s.lastRebalance), now = new Date();
+    const days = Math.floor((now - last)/86400000);
+    const next = new Date(last); next.setFullYear(next.getFullYear()+1);
+    const annualDue = days >= 365;
+    const needRebalance = anyTrig || annualDue;
+    const trigAssets = assets.filter(a=>a.status==='리밸런싱');
+    // 필요도: 조정 필요 금액 비율 (10% = 최대), 룰 발동 시 최소 75%
+    let need = Math.min(1, turnoverPct / 0.10);
+    if (needRebalance) need = Math.max(need, 0.75);
+    const needLevel = need < 0.34 ? 0 : need < 0.67 ? 1 : 2;
+    const needLabel = ['낮음','보통','높음'][needLevel];
+    const needFg = ['oklch(0.45 0.12 150)','oklch(0.5 0.13 75)','var(--schemes-on-error-container)'][needLevel];
+    const needBg = ['oklch(0.93 0.06 150)','oklch(0.94 0.08 85)','var(--schemes-error-container)'][needLevel];
+    const needText = anyTrig ? `${trigAssets.map(a=>a.name).join(', ')} 이격률이 허용 범위를 넘었습니다.` : annualDue ? '연 1회 정기 리밸런싱 시점이 도래했습니다.' : needLevel===0 ? '설정한 목표 비중에 맞게 안정적으로 운용되고 있습니다.' : '일부 자산이 목표 비중에서 벗어나고 있습니다. 추가 납입 시 함께 조정하세요.';
+
+    const dot = on => h('span', { style:{ width:36, height:36, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', background: on ? 'var(--schemes-error-container)' : 'var(--schemes-surface-container-high)', color: on ? 'var(--schemes-on-error-container)' : 'var(--schemes-on-surface-variant)' } },
+      h(window.OctudDesignSystem_46f0ba.Icon, { name: on ? 'Notifications' : 'Check', size: 20 }));
+    const pill = (txt, on) => h('span', { className:'type-label-large', style:{ padding:'4px 12px', borderRadius:999, background: on ? 'var(--schemes-error)' : 'var(--schemes-surface-container-high)', color: on ? 'var(--schemes-on-error)' : 'var(--schemes-on-surface-variant)', whiteSpace:'nowrap' } }, txt);
+    const triggers = [
+      { title:`상대이격률 > ${pct(relT,0)}`, detail: trigAssets.length ? trigAssets.map(a=>`${a.name} ${a.relFmt}`).join(', ') : `최대 ${pct(maxRel)} · ${maxRelName}`, leading: dot(relTrig), trailing: pill(relTrig?'발동':'미발동', relTrig) },
+      { title:`절대이격률 > ${pct(absT,0)}p`, detail: `최대 ${pct(maxAbs)}p`, leading: dot(absTrig), trailing: pill(absTrig?'발동':'미발동', absTrig) },
+      { title:'연 1회 정기 리밸런싱', detail: `마지막 ${s.lastRebalance} · ${days}일 경과`, leading: dot(annualDue), trailing: pill(annualDue ? '도래' : `${365-days}일 남음`, annualDue) },
+      { title:'추가 납입', detail: s.extraCash ? `${won(s.extraCash)}원 반영 중` : '납입 예정 금액을 체크리스트에 입력', leading: h('span',{ style:{ width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background: s.extraCash?'var(--schemes-primary-container)':'var(--schemes-surface-container-high)', color: s.extraCash?'var(--schemes-on-primary-container)':'var(--schemes-on-surface-variant)' } }, h(window.OctudDesignSystem_46f0ba.Icon,{ name:'Add', size:20 })), trailing: pill(s.extraCash ? '반영' : '—', false) },
+    ];
+
+    const base = total + (s.extraCash||0);
+    let buyAmt=0, sellAmt=0;
+    const checklist = s.assets.map((a,i) => {
+      const tq = Math.round(base*a.target/a.price), diff = tq - a.held, amt = diff*a.price;
+      if (diff>0) buyAmt+=amt; else sellAmt-=amt;
+      return { name:a.name, code:a.code, groupColor: GCOLOR[a.group], targetQty: tq.toLocaleString(), held: a.held.toLocaleString(), diff, tq,
+        order: diff===0 ? '유지' : (diff>0 ? `+${diff.toLocaleString()} 매수` : `${diff.toLocaleString()} 매도`),
+        bg: diff===0 ? 'var(--schemes-surface-container-high)' : diff>0 ? GAIN_BG : LOSS_BG,
+        fg: diff===0 ? 'var(--text-muted)' : diff>0 ? GAIN : LOSS,
+        amountFmt: diff===0 ? '—' : won(Math.abs(amt)), done: !!s.done[a.code], opacity: s.done[a.code] ? 0.5 : 1,
+        toggle: () => this.setState({ done: { ...this.state.done, [a.code]: !this.state.done[a.code] } }) };
+    });
+    const visibleChecklist = s.hideDone ? checklist.filter(c=>!c.done) : checklist;
+
+    // TWR
+    let nav = 100, spNav=100, kNav=100;
+    const twrRows = s.twr.map((r,i) => {
+      const prev = s.twr[i-1];
+      const ret = prev ? (r.balance - r.deposit)/prev.balance - 1 : 0;
+      nav *= (1+ret);
+      spNav = r.sp && s.twr[0].sp ? r.sp/s.twr[0].sp*100 : spNav;
+      kNav = r.kospi && s.twr[0].kospi ? r.kospi/s.twr[0].kospi*100 : kNav;
+      return { date:r.date, depositFmt: r.deposit? '+'+won(r.deposit) : '—', balanceFmt: won(r.balance), retFmt: prev? spct(ret,2) : '시작',
+        retBg: !prev ? 'var(--schemes-surface-container-high)' : ret>=0 ? GAIN_BG : LOSS_BG, retFg: !prev ? 'var(--text-muted)' : ret>=0 ? GAIN : LOSS,
+        navFmt: nav.toFixed(2), nav, spNav, kNav, sp: r.sp? r.sp.toLocaleString() : '—', kospi: r.kospi? r.kospi.toLocaleString() : '—',
+        remove: () => { if(!confirm(`${r.date} 행을 삭제할까요?`)) return; this.persist({ twr: this.state.twr.filter((_,j)=>j!==i) }, `입금/잔고 행 삭제 ${r.date}`); this.toast('행을 삭제했습니다.'); } };
+    });
+    const lastRow = twrRows[twrRows.length-1] || { nav:100, spNav:100, kNav:100 };
+    const twr = lastRow.nav/100 - 1, spRet = lastRow.spNav/100-1, kRet = lastRow.kNav/100-1;
+    const depositTotal = s.twr.reduce((t,r)=>t+r.deposit,0);
+    const cumPnl = (s.twr[s.twr.length-1]?.balance || 0) - depositTotal;
+
+    // 홈 차트: 월별 입력 + 일일 스냅샷 병합 → 기준가 체인 → 기간 필터 + 재기준화
+    const firstDate = s.twr[0]?.date || '0000';
+    const byDate = new Map(s.twr.map(r => [r.date, { date:r.date, deposit:r.deposit, balance:r.balance }]));
+    for (const d of s.daily) if (d.date > firstDate && !byDate.has(d.date)) byDate.set(d.date, { date:d.date, deposit:0, balance:d.total });
+    const merged = [...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+    let mnav = 100; const mergedRows = merged.map((r,i) => { const prev = merged[i-1]; if (prev) mnav *= (r.balance - r.deposit)/prev.balance; return { date:r.date, nav:mnav }; });
+    const lastDate = mergedRows.length ? new Date(mergedRows[mergedRows.length-1].date) : now;
+    const months = { '1m':1, '3m':3, '6m':6, all:0 }[s.period];
+    let series = mergedRows;
+    if (months) { const from = new Date(lastDate); from.setMonth(from.getMonth()-months); const idx = mergedRows.findIndex(r=>new Date(r.date) >= from); const start = Math.max(0, idx-1); series = mergedRows.slice(start); }
+    const headNav = mergedRows.length ? mergedRows[mergedRows.length-1].nav : 100, headTwr = headNav/100 - 1;
+    const baseNav = series[0]?.nav || 100;
+    const pts = series.map(r=>({ t: new Date(r.date).getTime(), v: (r.nav/baseNav - 1)*100, date:r.date }));
+    const periodRet = pts.length ? pts[pts.length-1].v/100 : 0;
+    const vMin = Math.min(0, ...pts.map(p=>p.v)), vMax = Math.max(0, ...pts.map(p=>p.v));
+    const step = niceStep((vMax - vMin) || 1);
+    const lo = Math.floor(vMin/step)*step - (vMin===Math.floor(vMin/step)*step ? step : 0), hi = Math.ceil(vMax/step)*step + (vMax===Math.ceil(vMax/step)*step ? step : 0);
+    const X0=44, X1=628, Y0=14, Y1=216, VH=230;
+    const t0 = pts[0]?.t || 0, t1 = pts[pts.length-1]?.t || 1;
+    const px = t => t1>t0 ? X0 + (t-t0)/(t1-t0)*(X1-X0) : X0;
+    const py = v => Y1 - (v-lo)/(hi-lo)*(Y1-Y0);
+    const chartPath = pts.map((p,i)=>(i?'L':'M')+px(p.t).toFixed(1)+' '+py(p.v).toFixed(1)).join(' ');
+    const ticks = []; for (let v=lo; v<=hi+1e-9; v+=step) ticks.push({ y: py(v).toFixed(1), pct: (py(v)/VH*100).toFixed(2)+'%', label: (Math.abs(v)<1e-9?0:v).toFixed(step<1?1:0), stroke: Math.abs(v)<1e-9 ? 'var(--schemes-outline)' : 'var(--schemes-outline-variant)' });
+    const fmtD = d => d.slice(5).replace('-','.');
+    const xLabels = pts.length ? [0, Math.floor((pts.length-1)/2), pts.length-1].filter((v,i,a)=>a.indexOf(v)===i).map((i,k,arr)=>({ pct: (px(pts[i].t)/640*100).toFixed(2)+'%', label: fmtD(pts[i].date), tf: k===0?'none':k===arr.length-1?'translateX(-100%)':'translateX(-50%)' })) : [];
+    const chartColor = periodRet >= 0 ? GAIN : LOSS;
+    const periods = [['1m','1개월'],['3m','3개월'],['6m','6개월'],['all','전체']].map(([k,l])=>({ label: s.period===k ? `${l} ${periodRet>=0?'▲':'▼'}${Math.abs(periodRet*100).toFixed(2)}%` : l,
+      bg: s.period===k ? 'var(--schemes-on-surface)' : 'var(--schemes-surface-container)', fg: s.period===k ? 'var(--schemes-surface)' : 'var(--text-muted)', select: () => this.setState({ period:k }) }));
+
+    // 수익률 탭 차트
+    const allY = twrRows.flatMap(r=>[r.nav,r.spNav,r.kNav]);
+    const yMin = Math.min(...allY, 100), yMax = Math.max(...allY, 100);
+    const pad = (yMax-yMin)*0.1 || 1;
+    const lo2 = yMin-pad, hi2 = yMax+pad;
+    const px2 = i => twrRows.length>1 ? 40 + i*(590/(twrRows.length-1)) : 40;
+    const py2 = v => 200 - (v-lo2)/(hi2-lo2)*180;
+    const path = key => twrRows.map((r,i)=>(i?'L':'M')+px2(i).toFixed(1)+' '+py2(r[key]).toFixed(1)).join(' ');
+    const nd = s.nd;
+    const setNd = k => e => this.setState({ nd: { ...this.state.nd, [k]: e.target.value } });
+
+    const maxR = Math.max(...ROADMAP.map(r=>r[1])), maxI = Math.max(...ROADMAP.map(r=>r[5]));
+    const roadmap = ROADMAP.map((r,i)=>({ year:r[0], label:`Y+${i}`, reserve:r[1].toFixed(1), biz:r[2].toFixed(1), cost:r[3].toFixed(1), ratio:pct(r[4],0), inc:r[5].toFixed(2), total:r[6].toFixed(2), tax:pct(r[7],0), net:r[8].toFixed(2),
+      reserveH: (r[1]/maxR*130).toFixed(1)+'px', incH: (r[5]/maxI*60).toFixed(1)+'px' }));
+    const cross = ROADMAP.find(r=>r[5]>=r[3]);
+    const rebalanceStatus = anyTrig ? '리밸런싱 필요' : annualDue ? '정기 리밸런싱 도래' : '허용 범위 내';
+
+    return {
+      locked: s.locked, unlocked: !s.locked, pw: s.pw, pwError: s.pwError,
+      setPw: e => this.setState({ pw: e.target.value, pwError:false }),
+      pwRef: this.pwRef || (this.pwRef = React.createRef()),
+      tryUnlock: e => { if (e && e.preventDefault) e.preventDefault(); const typed = (this.pwRef && this.pwRef.current ? this.pwRef.current.value : this.state.pw).trim(); this.unlock(typed, password); },
+      serverMode: !!this.api, syncLabel: this.api ? (s.syncing ? '동기화 중…' : s.syncError ? '서버 오류' : '서버 연결됨') : '로컬 저장', syncDot: this.api ? (s.syncError ? 'var(--schemes-error)' : s.syncing ? 'oklch(0.85 0.17 95)' : 'oklch(0.72 0.17 150)') : 'var(--schemes-outline)',
+      downloadBackup: () => this.downloadBackup(), takeSnapshot: () => this.takeSnapshot(),
+      history: s.history.map(hh => ({ date: hh.date, who: hh.who, note: hh.note })), hasHistory: s.history.length > 0,
+      dailyCount: s.daily.length,
+      tabItems: ['홈','종목','리밸런싱','수익률','로드맵'], tab: s.tab, setTab: v => this.setState({ tab: v }),
+      show0: s.tab===0, show1: s.tab===1, show2: s.tab===2, show3: s.tab===3, show4: s.tab===4, showWide: s.tab!==0,
+      goRebalance: () => this.setState({ tab:2 }), goHoldings: () => this.setState({ tab:1 }),
+      accountName, donut, liveDot: s.live ? 'oklch(0.72 0.17 150)' : 'var(--schemes-outline)', liveLabel: s.live ? '실시간' : '수기',
+      filters, filteredAssets,
+      priceAsOf: s.priceAsOf, refreshPrices: () => this.refreshPrices(),
+      totalEvalFmt: won(total), investedFmt: won(s.invested), investedStr: String(s.invested),
+      setInvested: e => this.persist({ invested: Number(e.target.value) }, '투자원금 수정'),
+      pnlFmt: (pnl>=0?'+ ':'- ') + won(Math.abs(pnl)), pnlPctFmt: spct(s.invested? pnl/s.invested : 0, 2), pnlColor: pnl>=0 ? GAIN : LOSS,
+      twrFmt: spct(headTwr,2), twrColor: headTwr>=0?GAIN:LOSS, navFmt: headNav.toFixed(2), twrSince: s.twr[0]?.date || '—', twrUntil: s.twr[s.twr.length-1]?.date || '—',
+      spRetFmt: spct(spRet,2), kospiRetFmt: spct(kRet,2), vsSpFmt: spct(twr-spRet,2)+'p', vsKospiFmt: spct(twr-kRet,2)+'p',
+      depositTotalFmt: won(depositTotal), cumPnlFmt: (cumPnl>=0?'+':'')+won(cumPnl)+'원', cumPnlColor: cumPnl>=0?GAIN:LOSS,
+      chartPath, chartColor, ticks, xLabels, periods, lastX: pts.length ? px(pts[pts.length-1].t).toFixed(1) : -10, lastY: pts.length ? py(pts[pts.length-1].v).toFixed(1) : -10,
+      needLabel, needFg, needBg, needPos: (need*100).toFixed(1)+'%', needText, turnoverFmt: won(turnover), turnoverPctFmt: pct(turnoverPct),
+      lowC: needLevel===0 ? needFg : 'var(--text-muted)', midC: needLevel===1 ? needFg : 'var(--text-muted)', highC: needLevel===2 ? needFg : 'var(--text-muted)',
+      lowW: needLevel===0 ? 700 : 400, midW: needLevel===1 ? 700 : 400, highW: needLevel===2 ? 700 : 400,
+      rebalanceStatus, statusIcon: needRebalance ? 'Notifications' : 'Check',
+      needRebalance, alertText: anyTrig ? `${trigAssets.map(a=>a.name).join(', ')} 이격률이 임계치를 넘었습니다.` : `마지막 리밸런싱 후 ${days}일이 지났습니다. 연 1회 정기 리밸런싱 시점입니다.`,
+      relThreshFmt: pct(relT,0), absThreshFmt: pct(absT,0)+'p', accountLabel: accountType,
+      groups, assets, triggers, visibleChecklist,
+      lastRebalance: s.lastRebalance, setLastRebalance: e => this.persist({ lastRebalance: e.target.value }, '마지막 리밸런싱 일자 수정'),
+      daysSinceFmt: `${days}일 경과`, nextAnnualFmt: next.toISOString().slice(0,10), annualPct: Math.min(100, Math.round(days/365*100)),
+      hideDone: s.hideDone, toggleHideDone: () => this.setState({ hideDone: !this.state.hideDone }),
+      extraCashStr: s.extraCash ? String(s.extraCash) : '', setExtraCash: e => this.setState({ extraCash: Number(e.target.value)||0 }),
+      buySummary: `매수 ${won(buyAmt)}원`, sellSummary: `매도 ${won(sellAmt)}원`, netSummary: `순현금 ${won(sellAmt-buyAmt+(s.extraCash||0))}원`,
+      applyRebalance: () => { const doneList = checklist.filter(c=>s.done[c.code]); if(!doneList.length){ this.toast('완료 체크된 종목이 없습니다.'); return; } if(!confirm(`${doneList.length}개 종목의 보유량을 목표주식수로 반영할까요?`)) return; const arr = s.assets.map((a,i)=> s.done[a.code] ? {...a, held: checklist[i].tq} : a); this.persist({ assets: arr, lastRebalance: new Date().toISOString().slice(0,10), done:{}, extraCash:0 }, `리밸런싱 체결 반영 (${doneList.length}종목)`); this.toast('보유량을 업데이트했습니다.'); },
+      twrRows, navPath: path('nav'), spPath: path('spNav'), kospiPath: path('kNav'), yMinFmt: lo2.toFixed(0), yMidFmt: ((lo2+hi2)/2).toFixed(0), yMaxFmt: hi2.toFixed(0),
+      nd: { ...nd, setDate:setNd('date'), setDeposit:setNd('deposit'), setBalance:setNd('balance'), setSp:setNd('sp'), setKospi:setNd('kospi'),
+        add: () => { if(!nd.date || !nd.balance) { this.toast('일자와 계좌잔고는 필수입니다.'); return; } const row = { date:nd.date, deposit:Number(nd.deposit)||0, balance:Number(nd.balance), sp:Number(nd.sp)||0, kospi:Number(nd.kospi)||0 };
+          const twrList = [...s.twr, row].sort((a,b)=>a.date.localeCompare(b.date)); this.persist({ twr: twrList, nd:{ ...nd, deposit:'', balance:'', sp:'', kospi:'' } }, `입금/잔고 행 추가 ${row.date}${row.deposit?' 입금 '+row.deposit.toLocaleString():''}`); this.toast('행을 추가했습니다.'); } },
+      roadmap, rmFinalReserve: ROADMAP[ROADMAP.length-1][1].toFixed(1), rmPvReserve:'82.0', rmFinalInc: ROADMAP[ROADMAP.length-1][5].toFixed(2), rmPvInc:'5.19', rmCrossYear: cross ? String(cross[0]) : '—',
+      hasSnack: !!s.snack, snack: s.snack, closeSnack: () => this.setState({ snack:'' }),
+      footerNote: this.api ? `Octud 법인계좌 · ${accountType} 룰 적용 · 서버 동기화 · 백업은 상단 ⤓ 버튼` : `Octud 법인계좌 · ${accountType} 룰 적용 · 데이터는 이 브라우저에만 저장됩니다 — Tweaks의 apiBase에 서버 주소를 넣으면 팀 공용으로 전환 (server/SETUP.md 참고)`,
+    };
+  }
+}
+</script>
+</body>
+</html>

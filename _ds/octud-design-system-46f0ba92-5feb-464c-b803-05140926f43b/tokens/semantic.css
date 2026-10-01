@@ -1,0 +1,53 @@
+/* Octud Design System — Semantic aliases & shape/elevation systems
+   Friendly names layered over the raw Figma scheme + shape tokens. */
+:root{
+  /* Surfaces */
+  --surface:var(--schemes-surface);
+  --surface-dim:var(--schemes-surface-dim);
+  --surface-bright:var(--schemes-surface-bright);
+  --surface-card:var(--schemes-surface-container-low);
+  --surface-container-lowest:var(--schemes-surface-container-lowest);
+  --surface-container-low:var(--schemes-surface-container-low);
+  --surface-container:var(--schemes-surface-container);
+  --surface-container-high:var(--schemes-surface-container-high);
+  --surface-container-highest:var(--schemes-surface-container-highest);
+  /* Content */
+  --text-body:var(--schemes-on-surface);
+  --text-muted:var(--schemes-on-surface-variant);
+  --on-surface:var(--schemes-on-surface);
+  --on-surface-variant:var(--schemes-on-surface-variant);
+  /* Roles */
+  --primary:var(--schemes-primary);
+  --on-primary:var(--schemes-on-primary);
+  --primary-container:var(--schemes-primary-container);
+  --on-primary-container:var(--schemes-on-primary-container);
+  --secondary:var(--schemes-secondary);
+  --secondary-container:var(--schemes-secondary-container);
+  --on-secondary-container:var(--schemes-on-secondary-container);
+  --tertiary:var(--schemes-tertiary);
+  --tertiary-container:var(--schemes-tertiary-container);
+  --error:var(--schemes-error);
+  --error-container:var(--schemes-error-container);
+  --on-error:var(--schemes-on-error);
+  /* Lines */
+  --border:var(--schemes-outline-variant);
+  --border-strong:var(--schemes-outline);
+  /* Shape (px from unitless Shape tokens) */
+  --radius-none:calc(var(--corner-none)*1px);
+  --radius-xs:calc(var(--corner-extra-small)*1px);
+  --radius-sm:calc(var(--corner-small)*1px);
+  --radius-md:calc(var(--corner-medium)*1px);
+  --radius-lg:calc(var(--corner-large)*1px);
+  --radius-lg-increased:calc(var(--corner-large-increased)*1px);
+  --radius-xl:calc(var(--corner-extra-large)*1px);
+  --radius-xl-increased:calc(var(--corner-extra-large-increased)*1px);
+  --radius-xxl:calc(var(--corner-extra-extra-large)*1px);
+  --radius-full:calc(var(--corner-full)*1px);
+  /* Elevation — M3 shadow ladder (shadow rgba matches the source file) */
+  --elevation-0:none;
+  --elevation-1:0 1px 2px 0 rgba(0,0,0,0.3),0 1px 3px 1px rgba(0,0,0,0.15);
+  --elevation-2:0 1px 2px 0 rgba(0,0,0,0.3),0 2px 6px 2px rgba(0,0,0,0.15);
+  --elevation-3:0 1px 3px 0 rgba(0,0,0,0.3),0 4px 8px 3px rgba(0,0,0,0.15);
+  --elevation-4:0 2px 3px 0 rgba(0,0,0,0.3),0 6px 10px 4px rgba(0,0,0,0.15);
+  --elevation-5:0 4px 4px 0 rgba(0,0,0,0.3),0 8px 12px 6px rgba(0,0,0,0.15);
+}

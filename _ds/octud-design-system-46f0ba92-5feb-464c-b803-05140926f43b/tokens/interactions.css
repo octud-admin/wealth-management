@@ -1,0 +1,11 @@
+/* Octud Design System — interaction utilities (M3 state layers, focus rings, ripple-less hover/press).
+   State layers use currentColor so they tint correctly for every role (on-primary over primary,
+   primary over transparent, etc.) — exactly the M3 behaviour. */
+.oct-state{position:relative;overflow:hidden;isolation:isolate}
+.oct-state::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .12s ease;pointer-events:none;border-radius:inherit;z-index:0}
+.oct-state:hover:not(:disabled):not([aria-disabled="true"])::after{opacity:.08}
+.oct-state:focus-visible::after{opacity:.1}
+.oct-state:active:not(:disabled)::after{opacity:.1}
+.oct-state:focus-visible{outline:3px solid var(--schemes-secondary);outline-offset:2px}
+.oct-state>*{position:relative;z-index:1}
+.oct-disabled,.oct-state:disabled,.oct-state[aria-disabled="true"]{opacity:.38;pointer-events:none;box-shadow:none!important}

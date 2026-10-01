@@ -1,0 +1,8 @@
+/* Octud Design System — global CSS entry.
+   Consumers link this one file. Import list only. */
+@import "./tokens/fonts.css";
+@import "./tokens/fig-tokens.css";
+@import "./tokens/semantic.css";
+@import "./tokens/typography.css";
+@import "./tokens/base.css";
+@import "./tokens/interactions.css";

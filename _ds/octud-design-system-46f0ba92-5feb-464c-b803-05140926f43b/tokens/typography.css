@@ -1,0 +1,30 @@
+/* Octud Design System — Typography
+   M3 type scale, values from the Figma "Typescale" collection (tokens/fig-tokens.css).
+   Float tokens are unitless — sizes/line-heights/tracking are wrapped in calc(... * 1px). */
+:root{
+  --font-brand:var(--static-font-brand,"Roboto"),"Noto Sans KR",system-ui,sans-serif;
+  --font-plain:var(--static-font-plain,"Roboto"),"Noto Sans KR",system-ui,sans-serif;
+  --font-mono:"Roboto Mono",ui-monospace,monospace;
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-bold:600;
+}
+
+/* Type-role utility classes. Add .emphasized for the emphasized weight. */
+.type-display-large{font-family:var(--font-brand);font-size:calc(var(--static-display-large-size)*1px);line-height:calc(var(--static-display-large-line-height)*1px);letter-spacing:calc(var(--static-display-large-tracking)*1px);font-weight:var(--weight-regular)}
+.type-display-medium{font-family:var(--font-brand);font-size:calc(var(--static-display-medium-size)*1px);line-height:calc(var(--static-display-medium-line-height)*1px);letter-spacing:calc(var(--static-display-medium-tracking)*1px);font-weight:var(--weight-regular)}
+.type-display-small{font-family:var(--font-brand);font-size:calc(var(--static-display-small-size)*1px);line-height:calc(var(--static-display-small-line-height)*1px);letter-spacing:calc(var(--static-display-small-tracking)*1px);font-weight:var(--weight-regular)}
+.type-headline-large{font-family:var(--font-brand);font-size:calc(var(--static-headline-large-size)*1px);line-height:calc(var(--static-headline-large-line-height)*1px);letter-spacing:calc(var(--static-headline-large-tracking)*1px);font-weight:var(--weight-regular)}
+.type-headline-medium{font-family:var(--font-brand);font-size:calc(var(--static-headline-medium-size)*1px);line-height:calc(var(--static-headline-medium-line-height)*1px);letter-spacing:calc(var(--static-headline-medium-tracking)*1px);font-weight:var(--weight-regular)}
+.type-headline-small{font-family:var(--font-brand);font-size:calc(var(--static-headline-small-size)*1px);line-height:calc(var(--static-headline-small-line-height)*1px);letter-spacing:calc(var(--static-headline-small-tracking)*1px);font-weight:var(--weight-regular)}
+.type-title-large{font-family:var(--font-brand);font-size:calc(var(--static-title-large-size)*1px);line-height:calc(var(--static-title-large-line-height)*1px);letter-spacing:calc(var(--static-title-large-tracking)*1px);font-weight:var(--weight-regular)}
+.type-title-medium{font-family:var(--font-plain);font-size:calc(var(--static-title-medium-size)*1px);line-height:calc(var(--static-title-medium-line-height)*1px);letter-spacing:calc(var(--static-title-medium-tracking)*1px);font-weight:var(--weight-medium)}
+.type-title-small{font-family:var(--font-plain);font-size:calc(var(--static-title-small-size)*1px);line-height:calc(var(--static-title-small-line-height)*1px);letter-spacing:calc(var(--static-title-small-tracking)*1px);font-weight:var(--weight-medium)}
+.type-body-large{font-family:var(--font-plain);font-size:calc(var(--static-body-large-size)*1px);line-height:calc(var(--static-body-large-line-height)*1px);letter-spacing:calc(var(--static-body-large-tracking)*1px);font-weight:var(--weight-regular)}
+.type-body-medium{font-family:var(--font-plain);font-size:calc(var(--static-body-medium-size)*1px);line-height:calc(var(--static-body-medium-line-height)*1px);letter-spacing:calc(var(--static-body-medium-tracking)*1px);font-weight:var(--weight-regular)}
+.type-body-small{font-family:var(--font-plain);font-size:calc(var(--static-body-small-size)*1px);line-height:calc(var(--static-body-small-line-height)*1px);letter-spacing:calc(var(--static-body-small-tracking)*1px);font-weight:var(--weight-regular)}
+.type-label-large{font-family:var(--font-plain);font-size:calc(var(--static-label-large-size)*1px);line-height:calc(var(--static-label-large-line-height)*1px);letter-spacing:calc(var(--static-label-large-tracking)*1px);font-weight:var(--weight-medium)}
+.type-label-medium{font-family:var(--font-plain);font-size:calc(var(--static-label-medium-size)*1px);line-height:calc(var(--static-label-medium-line-height)*1px);letter-spacing:calc(var(--static-label-medium-tracking)*1px);font-weight:var(--weight-medium)}
+.type-label-small{font-family:var(--font-plain);font-size:calc(var(--static-label-small-size)*1px);line-height:calc(var(--static-label-small-line-height)*1px);letter-spacing:calc(var(--static-label-small-tracking)*1px);font-weight:var(--weight-medium)}
+.type-display-large.emphasized,.type-display-medium.emphasized,.type-display-small.emphasized,.type-headline-large.emphasized,.type-headline-medium.emphasized,.type-headline-small.emphasized,.type-title-large.emphasized,.type-body-large.emphasized,.type-body-medium.emphasized,.type-body-small.emphasized{font-weight:var(--weight-medium)}
+.type-title-medium.emphasized,.type-title-small.emphasized,.type-label-large.emphasized,.type-label-medium.emphasized,.type-label-small.emphasized{font-weight:var(--weight-bold)}
