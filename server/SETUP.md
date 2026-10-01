@@ -3,7 +3,7 @@
 대시보드 = `https://wealth-pi-ebon.vercel.app` (팀 공용 주소). API는 같은 주소의 `/api/*`.
 
 ## 구조
-- `api/` — health · prices(네이버 시세) · auth · state · history · snapshot · fx(환율) · backup · **page**(대시보드 화면 서빙)
+- `api/` — health · prices(네이버 시세) · auth · state · history · snapshot · fx(환율) · closes(일별 종가) · backup · **page**(대시보드 화면 서빙)
 - `lib/store.js` — Upstash Redis 저장소, 인증, 스냅샷
 - `public/` — 디자인 시스템·폰트·로고·런타임(support.js) 정적 파일 (변경 거의 없음)
 - `vercel.json` — `/` → `/api/page` 리라이트, 매일 16:30 KST 스냅샷 Cron
@@ -31,6 +31,7 @@ GitHub 업로드가 필요한 경우는 `api/`, `lib/`, `public/`(디자인 시�
 | GET | /api/history?limit=100 | Bearer | 변경 이력 |
 | GET/POST | /api/snapshot | Cron 또는 Bearer | 평가금 스냅샷 |
 | GET | /api/fx?from=YYYY-MM-DD | Bearer | USD/KRW 일별 환율 맵 (ECB 백필 + 네이버 당일) |
+| GET | /api/closes?codes=a,b&from=YYYY-MM-DD | Bearer | 종목별 일별 종가 (네이버 일봉, Redis 캐시) |
 | GET | /api/backup?format=csv | Bearer | 전체 백업 |
 
 ## 무료 한도

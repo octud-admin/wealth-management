@@ -93,6 +93,44 @@ export async function ensureFx(from) {
   return fx;
 }
 
+// ---------- 일별 종가 (네이버 일봉) ----------
+// fchart siseJson: [['날짜','시가','고가','저가','종가','거래량','외국인소진율'], ['20250801', ...], ...]
+export async function fetchDailyCloses(code, fromYmd, toYmd) {
+  const out = {};
+  try {
+    const r = await fetch(`https://fchart.stock.naver.com/siseJson.nhn?symbol=${code}&requestType=1&startTime=${fromYmd}&endTime=${toYmd}&timeframe=day`, { headers: H });
+    const txt = await r.text();
+    const rows = JSON.parse(txt.replace(/'/g, '"').replace(/,\s*]/g, ']'));
+    for (const row of rows.slice(1)) { const d = String(row[0]); const c = Number(row[4]); if (/^\d{8}$/.test(d) && c) out[`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`] = c; }
+  } catch (e) {}
+  if (!Object.keys(out).length) {
+    try {
+      const r = await fetch(`https://api.stock.naver.com/chart/domestic/item/${code}/day?startDateTime=${fromYmd}0000&endDateTime=${toYmd}2359`, { headers: H });
+      const d = await r.json();
+      for (const it of d || []) { const ld = String(it.localDate || ''); const c = Number(it.closePrice); if (/^\d{8}$/.test(ld) && c) out[`${ld.slice(0,4)}-${ld.slice(4,6)}-${ld.slice(6,8)}`] = c; }
+    } catch (e) {}
+  }
+  return out;
+}
+export async function ensureCloses(codes, from) {
+  const today = todayKST();
+  const all = (await redis.get('closes')) || {};
+  let changed = false;
+  for (const code of codes) {
+    const have = all[code] || {};
+    const dates = Object.keys(have).sort();
+    const start = dates.length && dates[0] <= from ? dates[dates.length - 1] : from;
+    if (start <= today) {
+      const got = await fetchDailyCloses(code, start.replace(/-/g, ''), today.replace(/-/g, ''));
+      if (Object.keys(got).length) { all[code] = { ...have, ...got }; changed = true; }
+    }
+  }
+  if (changed) await redis.set('closes', all);
+  const res = {};
+  for (const code of codes) { res[code] = {}; for (const [d, c] of Object.entries(all[code] || {})) if (d >= from) res[code][d] = c; }
+  return res;
+}
+
 // ---------- 저장소 ----------
 export const getState = () => redis.get('state');
 export const putState = state => redis.set('state', state);
