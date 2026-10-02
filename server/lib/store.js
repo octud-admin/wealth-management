@@ -179,6 +179,61 @@ export async function ensureIndex(from) {
   return res;
 }
 
+// ---------- 자산배분 펀드 비교군 (PRPFX·ALLW·AOR, 분배금 포함 수정종가) + 보유 ETF 분배금 ----------
+// Yahoo v8 chart (query1 → query2) → 실패 시 stooq 종가. 수정종가는 분배 때마다 과거값이 다시 계산되므로 증분 병합하지 않고 통째로 갱신(캐시 6시간)
+export const PEERS = ['PRPFX', 'ALLW', 'AOR'];
+async function fetchYahoo(symbol, fromIso) {
+  const p1 = Math.floor(Date.parse(fromIso + 'T00:00:00Z') / 1000) - 10 * 86400, p2 = Math.floor(Date.now() / 1000) + 86400;
+  for (const host of ['query1', 'query2']) {
+    try {
+      const r = await fetch(`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=1d&events=div&includeAdjustedClose=true`, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' } });
+      if (!r.ok) continue;
+      const res = (await r.json())?.chart?.result?.[0];
+      if (!res) continue;
+      const off = Number(res.meta?.gmtoffset) || 0, day = t => new Date((t + off) * 1000).toISOString().slice(0, 10);
+      const ts = res.timestamp || [], cl = res.indicators?.quote?.[0]?.close || [], adj = res.indicators?.adjclose?.[0]?.adjclose || [];
+      const close = {}, adjc = {}, div = {};
+      ts.forEach((t, i) => { const k = day(t), c = Number(cl[i]), a = Number(adj[i]); if (c) close[k] = c; if (a) adjc[k] = Math.round(a * 10000) / 10000; });
+      for (const e of Object.values(res.events?.dividends || {})) { const a = Number(e?.amount); if (a && e.date) div[day(e.date)] = a; }
+      return { close, adj: adjc, div };
+    } catch (e) {}
+  }
+  return null;
+}
+async function fetchStooq(symbol, fromIso) {
+  const out = {};
+  try {
+    const r = await fetch(`https://stooq.com/q/d/l/?s=${symbol.toLowerCase()}.us&d1=${fromIso.replace(/-/g, '')}&d2=${todayKST().replace(/-/g, '')}&i=d`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    for (const line of (await r.text()).split('\n').slice(1)) { const [date, , , , close] = line.split(','); const c = Number(close); if (/^\d{4}-\d{2}-\d{2}$/.test(date) && c) out[date] = c; }
+  } catch (e) {}
+  return out;
+}
+export async function ensurePeers(from) {
+  const cache = (await redis.get('peers')) || {};
+  if (cache.data && cache.from <= from && Date.now() - (cache.at || 0) < 6 * 3600 * 1000) return cache.data;
+  const start = cache.from && cache.from < from ? cache.from : from;
+  const data = {};
+  await Promise.all(PEERS.map(async sym => {
+    const y = await fetchYahoo(sym, start);
+    if (y && Object.keys(y.adj).length) { data[sym] = y.adj; return; }
+    const sq = await fetchStooq(sym, start);
+    if (Object.keys(sq).length) data[sym] = sq; else if (cache.data?.[sym]) data[sym] = cache.data[sym];
+  }));
+  if (Object.keys(data).length) await redis.set('peers', { at: Date.now(), from: start, data });
+  return data;
+}
+// 국내 ETF 분배금 { code: { 배당락일: 주당 금액(원) } } — 정책 벤치마크 총수익 계산용 (캐시 24시간)
+export async function ensureDivs(codes, from) {
+  const cache = (await redis.get('divs')) || {};
+  const ok = new Set(cache.ok || []);
+  if (cache.data && cache.from <= from && Date.now() - (cache.at || 0) < 24 * 3600 * 1000 && codes.every(c => ok.has(c))) return { data: cache.data, ok: true };
+  const data = { ...(cache.data || {}) };
+  const got = new Set();
+  await Promise.all(codes.map(async c => { const y = await fetchYahoo(`${c}.KS`, from); if (y) { data[c] = y.div; got.add(c); } }));
+  await redis.set('divs', { at: Date.now(), from, data, ok: [...got] });
+  return { data, ok: codes.every(c => got.has(c)) };
+}
+
 // ---------- 저장소 ----------
 export const getState = () => redis.get('state');
 export const putState = state => redis.set('state', state);
