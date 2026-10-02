@@ -139,11 +139,14 @@ async function fetchSpDaily(fromYmd, toYmd) {
     const d = await r.json();
     for (const it of (Array.isArray(d) ? d : d?.priceInfos || [])) { const ld = String(it.localDate || it.localDateTime || '').slice(0, 8); const c = num(it.closePrice); if (ld.length === 8 && c) out[`${ld.slice(0, 4)}-${ld.slice(4, 6)}-${ld.slice(6, 8)}`] = c; }
   } catch (e) {}
-  if (Object.keys(out).length) return out;
+  // 네이버 해외지수 일봉은 최근 ~6개월만 주므로, 요청 시작일보다 늦게 시작하면 나머지를 stooq에서 채움
+  const first = Object.keys(out).sort()[0];
+  const fromIso = `${fromYmd.slice(0, 4)}-${fromYmd.slice(4, 6)}-${fromYmd.slice(6, 8)}`;
+  if (first && first <= fromIso) return out;
   try {
-    const r = await fetch(`https://stooq.com/q/d/l/?s=^spx&d1=${fromYmd}&d2=${toYmd}&i=d`);
+    const r = await fetch(`https://stooq.com/q/d/l/?s=^spx&d1=${fromYmd}&d2=${toYmd}&i=d`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const txt = await r.text();
-    for (const line of txt.split('\n').slice(1)) { const [date, , , , close] = line.split(','); const c = Number(close); if (/^\d{4}-\d{2}-\d{2}$/.test(date) && c) out[date] = c; }
+    for (const line of txt.split('\n').slice(1)) { const [date, , , , close] = line.split(','); const c = Number(close); if (/^\d{4}-\d{2}-\d{2}$/.test(date) && c && !out[date]) out[date] = c; }
   } catch (e) {}
   return out;
 }
@@ -154,6 +157,7 @@ export async function ensureIndex(from) {
   for (const key of ['kospi', 'sp']) {
     const have = all[key] || {};
     const dates = Object.keys(have).sort();
+    // 저장분이 요청 시작일을 덮지 못하면(과거 구간 비어 있음) 시작일부터 다시 받음
     const start = dates.length && dates[0] <= from ? dates[dates.length - 1] : from;
     if (start <= today) {
       const got = key === 'kospi' ? await fetchDailyCloses('KOSPI', start.replace(/-/g, ''), today.replace(/-/g, '')) : await fetchSpDaily(start.replace(/-/g, ''), today.replace(/-/g, ''));
