@@ -148,6 +148,15 @@ async function fetchSpDaily(fromYmd, toYmd) {
     const txt = await r.text();
     for (const line of txt.split('\n').slice(1)) { const [date, , , , close] = line.split(','); const c = Number(close); if (/^\d{4}-\d{2}-\d{2}$/.test(date) && c && !out[date]) out[date] = c; }
   } catch (e) {}
+  const first2 = Object.keys(out).sort()[0];
+  if (first2 && first2 <= fromIso) return out;
+  try { // Yahoo Finance ^GSPC 일봉
+    const p1 = Math.floor(Date.UTC(+fromYmd.slice(0, 4), +fromYmd.slice(4, 6) - 1, +fromYmd.slice(6, 8)) / 1000), p2 = Math.floor(Date.now() / 1000);
+    const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?period1=${p1}&period2=${p2}&interval=1d`, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const d = await r.json();
+    const res = d?.chart?.result?.[0]; const ts = res?.timestamp || [], cl = res?.indicators?.quote?.[0]?.close || [];
+    ts.forEach((t, i) => { const c = Number(cl[i]); if (!c) return; const date = new Date((t - 5 * 3600) * 1000).toISOString().slice(0, 10); if (!out[date]) out[date] = Math.round(c * 100) / 100; });
+  } catch (e) {}
   return out;
 }
 export async function ensureIndex(from) {
