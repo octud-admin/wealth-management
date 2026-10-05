@@ -3,12 +3,12 @@
 대시보드 = `https://wealth.octud.com` (팀 공용 주소, 옛 주소 `wealth-pi-ebon.vercel.app`도 같은 서버). API는 같은 주소의 `/api/*`.
 
 ## 구조
-- `api/` — health · prices(네이버 시세) · auth · state · history · snapshot · fx(환율) · closes(일별 종가) · index(벤치마크 지수) · backup · **page**(대시보드 화면 서빙) · **alerts**(자동 알림) · **long**(20년 재현 데이터)
+- `api/` — health · prices(네이버 시세) · auth · state · history · snapshot · fx(환율) · closes(일별 종가) · index(벤치마크 지수) · backup · **page**(대시보드 화면 서빙) · **ext**(확장 API — `?fn=alerts` 자동 알림 · `?fn=long` 20년 재현 데이터)
 - `lib/store.js` — Upstash Redis 저장소, 인증, 스냅샷
 - `lib/alerts.js` — 알림 조건 판정 · 발송 (텔레그램 / 슬랙 / 메일) · 월간 나침반 요약
 - `lib/long.js` — 20년 재현용 장기 데이터 (Yahoo 월봉 · FRED 환율·금리 · 네이버 월봉)
 - `public/` — 디자인 시스템·폰트·로고·런타임(support.js) 정적 파일 (변경 거의 없음)
-- `vercel.json` — `/` → `/api/page` 리라이트, 매일 16:30 KST 스냅샷 Cron (스냅샷 뒤 알림 점검), long·snapshot 함수 최대 30초
+- `vercel.json` — `/` → `/api/page` 리라이트, 매일 16:30 KST 스냅샷 Cron (스냅샷 뒤 알림 점검), 함수 최대 30초
 
 ## 대시보드 화면 업데이트 방식
 대시보드 HTML은 GitHub가 아니라 **Redis(`page:html`)에 저장**되어 `/`에서 서빙됩니다.
@@ -22,7 +22,7 @@ GitHub 업로드가 필요한 경우는 `api/`, `lib/`, `public/`(디자인 시�
 4. Environment Variables: `PASSWORD`, `SECRET`, `CRON_SECRET`
 5. Redeploy → `/api/health` 확인
 
-## 나침반 · 20년 재현 데이터 (`/api/long`)
+## 나침반 · 20년 재현 데이터 (`/api/ext?fn=long`)
 지금 목표 비중을 과거 20년에 적용해 보기 위한 월간 데이터. 키·설정 불필요, 3일 캐시(Redis `long`).
 - 대체 지수: Yahoo 월봉 수정종가 — QQQ · SCHD(이전 DVY) · EWJ · KODEX 200 · ASHR(이전 FXI) · INDA(이전 EPI · 센섹스) · GLD · TLT · SPY(연도별 비교)
 - FRED: 원/달러(DEXKOUS) · 루피(DEXINUS) · 미국 10·30년 금리(DGS10·DGS30) · 한국 국고채 10년(IRLTLT01KRM156N) · 한국 3개월 금리(IR3TIB01KRM156N) · 한국 소비자물가(KORCPIALLMINMEI)
@@ -55,8 +55,8 @@ Cron 스냅샷 직후 아래 조건을 점검해 **새로 생긴 것만 1회** �
 | GET/PUT | /api/state | Bearer | 저장 상태 / 부분 저장 + 이력 |
 | GET | /api/history?limit=100 | Bearer | 변경 이력 |
 | GET/POST | /api/snapshot | Cron 또는 Bearer | 평가금 스냅샷 (Cron이면 알림 점검까지) |
-| GET/POST | /api/alerts | Bearer | GET 채널·최근 발송·현재 조건 / POST `{test}` 테스트 · `{run}` 지금 점검 · `{summary}` 나침반 요약 저장 |
-| GET | /api/long?codes=a,b | Bearer | 20년 재현용 월간 데이터 (3일 캐시, `&refresh` 강제 갱신) |
+| GET/POST | /api/ext?fn=alerts | Bearer | GET 채널·최근 발송·현재 조건 / POST `{test}` 테스트 · `{run}` 지금 점검 · `{summary}` 나침반 요약 저장 |
+| GET | /api/ext?fn=long&codes=a,b | Bearer | 20년 재현용 월간 데이터 (3일 캐시, `&refresh` 강제 갱신) |
 | GET | /api/fx?from=YYYY-MM-DD | Bearer | USD/KRW 일별 환율 맵 (ECB 백필 + 네이버 당일) |
 | GET | /api/closes?codes=a,b&from=YYYY-MM-DD | Bearer | 종목별 일별 종가 (네이버 일봉, Redis 캐시) |
 | GET | /api/index?from=YYYY-MM-DD | Bearer | 코스피·S&P 500 일별 종가 (네이버 일봉 / stooq 보조) |
@@ -64,6 +64,7 @@ Cron 스냅샷 직후 아래 조건을 점검해 **새로 생긴 것만 1회** �
 
 ## 무료 한도
 함수 호출 월 100만, Cron 하루 1회(±1시간), Redis 256MB·1만 명령/일. 사용량은 연 5MB 수준.
+**함수 파일은 배포당 12개까지** — 지금 `api/*.js` 12개. 새 API는 파일을 만들지 말고 `api/ext.js`의 `R`에 추가하고 `?fn=이름`으로 호출. 13개가 되면 빌드는 끝나도 "Deploying outputs"에서 실패하고 이전 배포가 그대로 남습니다 (2026-10-05 한 번 겪음).
 
 ## 데이터 복구
 모든 변경 시점의 전체 데이터가 Redis `snap:<timestamp>` 키로 보존. Upstash 콘솔 Data Browser에서 해당 값을 `state` 키에 복사하면 복구.
